@@ -1,0 +1,8 @@
+CREATE TABLE languages (
+  id SERIAL PRIMARY KEY,
+  language_name VARCHAR(50) NOT NULL,
+  iso_code CHAR(4) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
