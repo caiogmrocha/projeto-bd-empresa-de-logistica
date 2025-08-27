@@ -1,0 +1,12 @@
+CREATE TABLE addresses (
+  id SERIAL PRIMARY KEY,
+  country VARCHAR(50) NOT NULL,
+  state VARCHAR(50) NOT NULL,
+  city VARCHAR(50) NOT NULL,
+  street VARCHAR(100) NOT NULL,
+  number VARCHAR(10) NOT NULL,
+  zip_code VARCHAR(15) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
