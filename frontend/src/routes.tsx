@@ -1,12 +1,27 @@
-import type React from "react";
-import { Route, Routes } from "react-router";
+import { createBrowserRouter } from "react-router";
 import App from "./App";
+import { MainLayout } from "./layouts/main-layout";
 
-export const Router: React.FC = () => {
-  return (
-    <Routes>
-      <Route index element={<App />} />
-      <Route path="/test" element={<h1>Test</h1>} />
-    </Routes>
-  );
-}
+export const router = createBrowserRouter([
+  {
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <App />,
+      },
+      {
+        path: "/test1",
+        element: <h1>Test 1</h1>,
+      },
+      {
+        path: "/test2",
+        element: <h1>Test 2</h1>,
+      },
+      {
+        path: "/test3",
+        element: <h1>Test 3</h1>,
+      },
+    ],
+  },
+]);
