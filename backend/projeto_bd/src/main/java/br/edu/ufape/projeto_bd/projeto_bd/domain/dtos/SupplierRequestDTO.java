@@ -1,5 +1,8 @@
 package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos;
 
+import org.hibernate.validator.constraints.br.CNPJ;
+import org.hibernate.validator.constraints.br.CPF;
+
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +18,9 @@ public class SupplierRequestDTO {
     @NotNull
     private SupplierType supplierType;
 
+    @CPF
     private String cpf;
-
+    @CNPJ
     private String cnpj;
 
     @NotNull
