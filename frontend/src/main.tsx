@@ -6,6 +6,7 @@ import { router } from './routes.tsx'
 
 import "./assets/css/index.css"
 import { ThemeProvider } from './components/theme-provider.tsx'
+import "@/lib/zod-ptbr"
 
 const queryClient = new QueryClient()
 
