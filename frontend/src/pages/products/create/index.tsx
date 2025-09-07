@@ -19,7 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 
 // Dynamic schema using records so we can support any set of language ISO codes
@@ -27,7 +26,7 @@ const ProductFormSchema = z.object({
   names: z.record(z.string(), z.string().min(1).max(255)),
   descriptions: z.record(z.string(), z.string().min(1).max(255)),
   warrantyDate: z.date(),
-  status: z.nativeEnum(ProductStatus),
+  status: z.enum(ProductStatus),
   minimumSalePrice: z.number().min(0).optional(),
   stock: z.number().min(0).optional(),
   categoriesIds: z.array(z.number().int().positive()).optional(),
@@ -388,7 +387,6 @@ export const ProductCreatePage: React.FC = () => {
           </Form>
         </CardContent>
       </Card>
-      <Toaster />
     </div>
   )
 }
