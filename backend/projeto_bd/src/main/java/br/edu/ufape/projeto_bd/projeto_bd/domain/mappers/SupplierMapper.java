@@ -1,6 +1,3 @@
-// EDITE ESTE ARQUIVO:
-// backend/projeto_bd/src/main/java/br/edu/ufape/projeto_bd/projeto_bd/domain/mappers/SupplierMapper.java
-
 package br.edu.ufape.projeto_bd.projeto_bd.domain.mappers;
 
 import org.mapstruct.Mapper;
