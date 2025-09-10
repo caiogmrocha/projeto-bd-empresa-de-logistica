@@ -3,13 +3,13 @@ import { useMutation } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createCostumer } from "@/api/costumers"
+import { createCustomer } from "@/api/customers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
-const CostumerFormSchema = z.object({
+const CustomerFormSchema = z.object({
   name: z.string().min(1, "NNome é obrigatório"),
   credit: z.number().min(0, "Crédito deve ser um número não negativo"),
   country: z.string().min(1, "País é obrigatório"),
@@ -20,14 +20,14 @@ const CostumerFormSchema = z.object({
   zipCode: z.string().min(1, "CEP é obrigatório"),
 })
 
-type CostumerFormValues = z.infer<typeof CostumerFormSchema>
+type CustomerFormValues = z.infer<typeof CustomerFormSchema>
 
-export const CostumerCreatePage: React.FC = () => {
+export const CustomerCreatePage: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const form = useForm<CostumerFormValues>({
-    resolver: zodResolver(CostumerFormSchema),
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(CustomerFormSchema),
     defaultValues: {
       name: "",
       credit: 0,
@@ -42,7 +42,7 @@ export const CostumerCreatePage: React.FC = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: createCostumer,
+    mutationFn: createCustomer,
     onSuccess: (data) => {
       setErrorMsg(null)
       setSuccessMsg(`Cliente “${data.name}” criado (id: ${data.id}).`)
@@ -56,7 +56,7 @@ export const CostumerCreatePage: React.FC = () => {
     },
   })
 
-  function onSubmit(values: CostumerFormValues) {
+  function onSubmit(values: CustomerFormValues) {
     // Normalize optional empty strings to undefined
     const payload = {
       ...values,

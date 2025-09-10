@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table"
 import { Link } from "react-router"
 
-const data: Costumer[] = [
+const data: Customer[] = [
   {
     id: "1a2b3c4d",
     name: "Kenneth Smith",
@@ -82,7 +82,7 @@ const data: Costumer[] = [
   },
 ]
 
-export type Costumer = {
+export type Customer = {
   id: string
   name: string
   credit: number
@@ -94,7 +94,7 @@ export type Costumer = {
   zipCode: string
 }
 
-const columns: ColumnDef<Costumer>[] = [
+const columns: ColumnDef<Customer>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -196,14 +196,14 @@ const columns: ColumnDef<Costumer>[] = [
     id: "actions",
     header: "Opções",
     cell: ({ row }) => {
-      const costumer = row.original
+      const customer = row.original
       return (
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link to={`/costumers/${costumer.id}/edit`}>Editar</Link>
+            <Link to={`/customers/${customer.id}/edit`}>Editar</Link>
           </Button>
           <Button asChild size="sm" variant="destructive">
-            <Link to={`/costumers/${costumer.id}/delete`}>Excluir</Link>
+            <Link to={`/customers/${customer.id}/delete`}>Excluir</Link>
           </Button>
         </div>
       )
@@ -212,7 +212,7 @@ const columns: ColumnDef<Costumer>[] = [
   },
 ]
 
-export function CostumersListPage() {
+export function CustomersListPage() {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []

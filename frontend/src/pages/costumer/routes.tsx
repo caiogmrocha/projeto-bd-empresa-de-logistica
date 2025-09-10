@@ -1,33 +1,33 @@
 import type { RouteObject } from "react-router";
-import { CostumersListPage } from "./list";
-import { CostumerCreatePage } from "./create";
-import { CostumerDetailsPage } from "./details/index";
-import { EditCostumerPage } from "./edit/index";
-import { CostumerDeletePage } from "./delete";
+import { CustomersListPage } from "./list";
+import { CustomerCreatePage } from "./create";
+import { CustomerDetailsPage } from "./details/index";
+import { EditCustomerPage } from "./edit/index";
+import { CustomerDeletePage } from "./delete";
 
-export const costumersRoutes: RouteObject[] = [
+export const customersRoutes: RouteObject[] = [
   {
-    path: "/costumers",
+    path: "/customers",
     children: [
       {
         index: true,
-        Component: CostumersListPage,
+        Component: CustomersListPage,
       },
       {
-        path: "/costumers/create",
-        Component: CostumerCreatePage,
+        path: "/customers/create",
+        Component: CustomerCreatePage,
       },
       {
-        path: "/costumers/:costumerId",
-        Component: CostumerDetailsPage,
+        path: "/customers/:customerId",
+        Component: CustomerDetailsPage,
       },
       {
-        path: "/costumers/:costumerId/edit",
-        Component: EditCostumerPage,
+        path: "/customers/:customerId/edit",
+        Component: EditCustomerPage,
       },
       {
-        path: "/costumers/:costumerId/delete",
-        Component: CostumerDeletePage,
+        path: "/customers/:customerId/delete",
+        Component: CustomerDeletePage,
       }
     ],
   },

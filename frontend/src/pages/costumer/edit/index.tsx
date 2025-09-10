@@ -5,14 +5,14 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-import { getCostumer, updateCostumer, type Costumer } from "@/api/costumers"
+import { getCustomer, updateCustomer, type Customer } from "@/api/customers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
 
-const CostumerFormSchema = z.object({
+const CustomerFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   country: z.string().min(1, "País é obrigatório"),
   credit: z.number().min(0, "Crédito deve ser um número não negativo"),
@@ -23,18 +23,18 @@ const CostumerFormSchema = z.object({
   zipCode: z.string().min(1, "CEP é obrigatório"),
 })
 
-type CostumerFormValues = z.infer<typeof CostumerFormSchema>
+type CustomerFormValues = z.infer<typeof CustomerFormSchema>
 
-export const EditCostumerPage: React.FC = () => {
-  const { costumerId = "" } = useParams<{ costumerId: string }>()
-  const costumerQuery = useQuery<Costumer>({
-    queryKey: ["costumer", costumerId],
-    queryFn: () => getCostumer(costumerId),
-    enabled: !!costumerId,
+export const EditCustomerPage: React.FC = () => {
+  const { customerId = "" } = useParams<{ customerId: string }>()
+  const customerQuery = useQuery<Customer>({
+    queryKey: ["customer", customerId],
+    queryFn: () => getCustomer(customerId),
+    enabled: !!customerId,
   })
 
-  const form = useForm<CostumerFormValues>({
-    resolver: zodResolver(CostumerFormSchema),
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(CustomerFormSchema),
     defaultValues: {
       name: "",
       country: "",
@@ -48,9 +48,9 @@ export const EditCostumerPage: React.FC = () => {
     mode: "onSubmit",
   })
 
-  // Populate form when costumer data arrives
+  // Populate form when customer data arrives
   useEffect(() => {
-    const c = costumerQuery.data
+    const c = customerQuery.data
     if (!c) return
     form.reset({
       name: c.name,
@@ -61,27 +61,27 @@ export const EditCostumerPage: React.FC = () => {
       number: c.number,
       zipCode: c.zipCode,
     })
-  }, [form, costumerQuery.data])
+  }, [form, customerQuery.data])
 
   const mutation = useMutation({
-    mutationFn: (values: CostumerFormValues) => updateCostumer(costumerId, values),
+    mutationFn: (values: CustomerFormValues) => updateCustomer(customerId, values),
     onSuccess: () => {
-      toast.success("Costumer updated successfully")
+      toast.success("Customer updated successfully")
     },
     onError: (err: Error) => {
       toast.error(err.message)
     }
   })
 
-  function onSubmit(values: CostumerFormValues) {
+  function onSubmit(values: CustomerFormValues) {
     mutation.mutate(values)
   }
 
-  if (costumerQuery.isLoading) {
+  if (customerQuery.isLoading) {
     return <div className="p-6 text-sm text-zinc-500">Carregando cliente...</div>
   }
 
-  if (costumerQuery.isError) {
+  if (customerQuery.isError) {
     return <div className="p-6 text-sm text-red-500">Erro ao carregar cliente.</div>
   }
 

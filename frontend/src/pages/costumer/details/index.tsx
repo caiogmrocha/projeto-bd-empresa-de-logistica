@@ -1,5 +1,5 @@
 import React from "react";
 
-export const CostumerDetailsPage: React.FC = () => {
-  return <h1>Costumer Details</h1>;
+export const CustomerDetailsPage: React.FC = () => {
+  return <h1>Customer Details</h1>;
 };

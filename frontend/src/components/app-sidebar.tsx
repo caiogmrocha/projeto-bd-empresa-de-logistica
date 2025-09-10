@@ -88,17 +88,17 @@ const data = {
     },
     {
       title: "Clientes",
-      url: "/costumers",
+      url: "/customers",
       icon: User,
       isActive: true,
       items: [
         {
           title: "Listagem",
-          url: "/costumers",
+          url: "/customers",
         },
         {
           title: "Criação",
-          url: "/costumers/create",
+          url: "/customers/create",
         },
       ],
     },

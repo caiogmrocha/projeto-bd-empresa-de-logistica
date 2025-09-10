@@ -1,6 +1,6 @@
 
 // Create payload keyed dynamically by language ISO codes present in the system
-export interface CreateCostumerRequest {
+export interface CreateCustomerRequest {
   name: string
   country: string
   credit: number
@@ -11,14 +11,14 @@ export interface CreateCostumerRequest {
   zipCode: string
 }
 
-export type UpdateCostumerRequest = CreateCostumerRequest
+export type UpdateCustomerRequest = CreateCustomerRequest
 
-export type Costumer = {
+export type Customer = {
   id: number
-} & CreateCostumerRequest
+} & CreateCustomerRequest
 
-export async function createCostumer(data: CreateCostumerRequest) {
-  const response = await fetch("/api/costumers/create", {
+export async function createCustomer(data: CreateCustomerRequest) {
+  const response = await fetch("/api/customers/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -27,22 +27,22 @@ export async function createCostumer(data: CreateCostumerRequest) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create costumer: ${response.statusText}`);
+    throw new Error(`Failed to create customer: ${response.statusText}`);
   }
 
-  const costumer = await response.json();
-  return costumer as Costumer;
+  const customer = await response.json();
+  return customer as Customer;
 }
 
-export async function getCostumer(id: number | string): Promise<Costumer> {
-  // Mock: simulate network delay and return a generated costumer
+export async function getCustomer(id: number | string): Promise<Customer> {
+  // Mock: simulate network delay and return a generated customer
   await new Promise((r) => setTimeout(r, 300))
   const n = typeof id === 'string' ? parseInt(id, 10) : id
   const safeId = Number.isFinite(n) && (n as number) > 0 ? (n as number) : 1
 
   return {
     id: safeId,
-    name: `Costumer ${safeId}`,
+    name: `Customer ${safeId}`,
     country: "Country",
     credit: 100,
     state: "State",
@@ -54,8 +54,8 @@ export async function getCostumer(id: number | string): Promise<Costumer> {
   }
 }
 
-export async function updateCostumer(id: number | string, data: UpdateCostumerRequest): Promise<Costumer> {
-  const response = await fetch(`/api/costumers/update/${id}`, {
+export async function updateCustomer(id: number | string, data: UpdateCustomerRequest): Promise<Customer> {
+  const response = await fetch(`/api/customers/update/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -67,12 +67,12 @@ export async function updateCostumer(id: number | string, data: UpdateCostumerRe
     throw new Error(`Falha ao atualizar armazém: ${response.statusText}`);
   }
 
-  const costumer = await response.json();
-  return costumer as Costumer;
+  const customer = await response.json();
+  return customer as Customer;
 }
 
-export async function deleteCostumer(id: number | string): Promise<{ ok: true; id: number }> {
-  const response = await fetch(`/api/costumers/delete/${id}`, {
+export async function deleteCustomer(id: number | string): Promise<{ ok: true; id: number }> {
+  const response = await fetch(`/api/customers/delete/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) {
@@ -81,30 +81,30 @@ export async function deleteCostumer(id: number | string): Promise<{ ok: true; i
   return await response.json(); 
 }
 
-export interface GetCostumersParams {
+export interface GetCustomersParams {
   page?: number
   limit?: number
   search?: string
 }
 
-export interface CostumersPage {
-  items: Costumer[]
+export interface CustomersPage {
+  items: Customer[]
   total: number
   page: number
   limit: number
 }
 
-export async function getCostumers(params: GetCostumersParams = {}): Promise<CostumersPage> {
+export async function getCustomers(params: GetCustomersParams = {}): Promise<CustomersPage> {
   const page = params.page ?? 1
   const limit = params.limit ?? 10
   const search = (params.search ?? "").toLowerCase()
 
   // Mocked dataset
-  const MOCK: Costumer[] = Array.from({ length: 57 }).map((_, i) => {
+  const MOCK: Customer[] = Array.from({ length: 57 }).map((_, i) => {
     const id = i + 1
     return {
       id,
-      name: `Costumer ${id}`,
+      name: `Customer ${id}`,
       country: `Country ${id}`,
       credit: 100,
       state: `State ${id}`,
