@@ -1,8 +1,9 @@
 package br.edu.ufape.projeto_bd.projeto_bd.domain.services;
 
 import java.util.List;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
+
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 
 public interface ISupplierService {
     SupplierResponseDTO createSupplier(SupplierRequestDTO request);
