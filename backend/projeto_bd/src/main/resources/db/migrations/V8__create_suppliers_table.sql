@@ -2,7 +2,7 @@ CREATE TABLE suppliers (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   addresses_id BIGINT UNSIGNED NULL,
-  type ENUM('natural_person', 'legal_entity') NOT NULL,
+  type ENUM('NATURAL_PERSON', 'LEGAL_ENTITY') NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMP NULL,
