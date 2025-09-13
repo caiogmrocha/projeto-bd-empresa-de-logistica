@@ -31,3 +31,9 @@ spring:
     locations: classpath:db/migrations
     baseline-on-migrate: true
     validate-on-migrate: true
+
+logging:
+  level:
+    '[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]': DEBUG
+    '[org.springframework.web.servlet.DispatcherServlet]': DEBUG
+    '[br.edu.ufape.projeto_bd.projeto_bd.controllers]': DEBUG
