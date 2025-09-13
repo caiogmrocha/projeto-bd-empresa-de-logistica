@@ -84,6 +84,22 @@ const data = {
         },
       ],
     },
+    {
+      title: "Fornecedores",
+      url: "/suppliers",
+      icon: Building2,
+      isActive: false,
+      items: [
+        {
+          title: "Listagem",
+          url: "/suppliers",
+        },
+        {
+          title: "Criação",
+          url: "/suppliers/create",
+        },
+      ],
+    },
     // {
     //   title: "Models",
     //   url: "#",
