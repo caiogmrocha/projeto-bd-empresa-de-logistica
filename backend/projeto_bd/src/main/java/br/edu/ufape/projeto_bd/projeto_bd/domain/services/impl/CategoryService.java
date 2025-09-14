@@ -5,6 +5,7 @@ import br.edu.ufape.projeto_bd.projeto_bd.domain.exceptions.BusinessRuleExceptio
 import br.edu.ufape.projeto_bd.projeto_bd.domain.exceptions.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.CategoryRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.CategoryResponseDTO;
@@ -44,11 +45,34 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CategoryResponseDTO> findAllCategories(Pageable pageable) {
-
-        Page<Category> categories = categoryRepository.findAll(pageable);
+    public Page<CategoryResponseDTO> findAllCategories(Pageable pageable, String search) {
+        Page<Category> categories;
+        if (search == null || search.trim().isEmpty()) {
+            categories = categoryRepository.findAll(pageable);
+        } else {
+            String term = search.trim();
+            Specification<Category> spec = buildSearchSpecification(term);
+            categories = categoryRepository.findAll(spec, pageable);
+        }
         return categories.map(categoryMapper::toResponseDTO);
 
+    }
+
+    private Specification<Category> buildSearchSpecification(String term) {
+        return (root, query, cb) -> {
+            Long idValue = null;
+            try { idValue = Long.parseLong(term); } catch (NumberFormatException ignored) {}
+
+            var predicates = cb.disjunction();
+            if (idValue != null) {
+                predicates.getExpressions().add(cb.equal(root.get("id"), idValue));
+            }
+            // name LIKE %term%
+            predicates.getExpressions().add(cb.like(cb.lower(root.get("name")), "%" + term.toLowerCase() + "%"));
+            // description LIKE %term% (if not null)
+            predicates.getExpressions().add(cb.like(cb.lower(cb.coalesce(root.get("description"), "")), "%" + term.toLowerCase() + "%"));
+            return predicates;
+        };
     }
 
     @Override

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.CategoryRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.CategoryResponseDTO;
@@ -42,14 +43,13 @@ public class CategoryController {
 
     /**
      * Endpoint para listar todas as categorias de forma paginada.
-     * Os parâmetros de paginação (page, size, sort) são passados na URL.
-     * Ex: /categories?page=0&size=10&sort=name,asc
-     * @param pageable Objeto que o Spring monta a partir dos parâmetros da URL.
-     * @return ResponseEntity com a página de categorias e o status HTTP 200 (OK).
+     * Suporta filtros por busca semelhante a produtos via ?search=.
+     * Parâmetros de paginação (page, size, sort) são passados na URL.
+     * Ex: /categories?page=0&size=10&sort=name,asc&search=eletron
      */
     @GetMapping
-    public ResponseEntity<Page<CategoryResponseDTO>> getAllCategories(Pageable pageable) {
-        Page<CategoryResponseDTO> categories = categoryService.findAllCategories(pageable);
+    public ResponseEntity<Page<CategoryResponseDTO>> getAllCategories(Pageable pageable, @RequestParam(required = false) String search) {
+        Page<CategoryResponseDTO> categories = categoryService.findAllCategories(pageable, search);
         return ResponseEntity.ok(categories);
     }
 
