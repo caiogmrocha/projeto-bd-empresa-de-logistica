@@ -11,13 +11,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 const WarehouseFormSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  country: z.string().min(1, "País é obrigatório"),
-  state: z.string().min(1, "Estado é obrigatório"),
-  city: z.string().min(1, "Cidade é obrigatória"),
-  street: z.string().min(1, "Rua é obrigatória"),
-  number: z.string().min(1, "Número é obrigatório"),
-  zipCode: z.string().min(1, "CEP é obrigatório"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
+  country: z.string().min(1, "País é obrigatório").max(50, "País deve ter no máximo 50 caracteres"),
+  state: z.string().min(1, "Estado é obrigatório").max(50, "Estado deve ter no máximo 50 caracteres"),
+  city: z.string().min(1, "Cidade é obrigatória").max(50, "Cidade deve ter no máximo 50 caracteres"),
+  street: z.string().min(1, "Rua é obrigatória").max(100, "Rua deve ter no máximo 100 caracteres"),
+  number: z.string().min(1, "Número é obrigatório").max(10, "Número deve ter no máximo 10 dígitos"),
+  zipCode: z.string().min(1, "CEP é obrigatório").max(8, "CEP deve ter no máximo 8 dígitos"),
 })
 
 type WarehouseFormValues = z.infer<typeof WarehouseFormSchema>
@@ -203,11 +203,6 @@ export const WarehouseCreatePage: React.FC = () => {
           {successMsg && (
             <div className="mt-6 rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-800">
               {successMsg}
-            </div>
-          )}
-          {errorMsg && (
-            <div className="mt-6 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
-              {errorMsg}
             </div>
           )}
         </CardContent>

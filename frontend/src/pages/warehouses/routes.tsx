@@ -18,10 +18,6 @@ export const warehousesRoutes: RouteObject[] = [
         Component: WarehouseCreatePage,
       },
       {
-        path: "/warehouses/:warehouseId",
-        Component: WarehouseDetailsPage,
-      },
-      {
         path: "/warehouses/:warehouseId/edit",
         Component: EditWarehousePage,
       },

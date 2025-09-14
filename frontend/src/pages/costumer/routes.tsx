@@ -18,10 +18,6 @@ export const customersRoutes: RouteObject[] = [
         Component: CustomerCreatePage,
       },
       {
-        path: "/customers/:customerId",
-        Component: CustomerDetailsPage,
-      },
-      {
         path: "/customers/:customerId/edit",
         Component: EditCustomerPage,
       },
