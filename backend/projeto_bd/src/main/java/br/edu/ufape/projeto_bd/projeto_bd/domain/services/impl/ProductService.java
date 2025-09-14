@@ -24,9 +24,9 @@ import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.ProductTranslationId;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.mappers.ProductMapper;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.LanguageRepository;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.CategoryRepository;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.ProductRepository;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.ProductTranslationRepository;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.CategoryRepository;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.IProductService;
 import lombok.RequiredArgsConstructor;
 
@@ -45,14 +45,12 @@ public class ProductService implements IProductService {
     public ProductResponseDTO createProduct(ProductRequestDTO request) {
         Product product = productMapper.toEntity(request);
 
-        Set<Category> categories = findCategoriesByIds(request.getCategoryIds());
-
-        product.setCategories(categories);
-
         Product savedProduct = productRepository.save(product);
 
         // Save translations
         upsertTranslations(savedProduct, request.getNames(), request.getDescriptions());
+        // Set categories (accepts either categoryIds or categoriesIds from request)
+        applyCategories(savedProduct, coalesceCategoryIds(request));
 
         return buildResponseWithTranslations(savedProduct);
     }
@@ -113,9 +111,6 @@ public class ProductService implements IProductService {
                 .orElseThrow(() -> new EntityNotFoundException(Product.class, id));
 
         productMapper.updateProductFromDto(request, existingProduct);
-        Set<Category> categories = findCategoriesByIds(request.getCategoryIds());
-        existingProduct.setCategories(categories);
-
         Product updatedProduct = productRepository.save(existingProduct);
 
         // Delete all translations and recreate (ensures clean state and avoids PK conflicts)
@@ -123,6 +118,9 @@ public class ProductService implements IProductService {
         // Ensure deletes hit the DB before inserts in the same transaction
         productTranslationRepository.flush();
         upsertTranslations(updatedProduct, request.getNames(), request.getDescriptions());
+
+        // Replace categories (accepts either categoryIds or categoriesIds from request)
+        applyCategories(updatedProduct, coalesceCategoryIds(request));
 
         return buildResponseWithTranslations(updatedProduct);
     }
@@ -170,8 +168,12 @@ public class ProductService implements IProductService {
         }
         dto.setNames(names);
         dto.setDescriptions(descriptions);
+        // categories ids
+        if (product.getCategories() != null) {
+            dto.setCategoriesIds(product.getCategories().stream().map(Category::getId).toList());
+        }
         return dto;
-      }
+    }
 
     private Set<Category> findCategoriesByIds(Set<Long> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
@@ -181,5 +183,21 @@ public class ProductService implements IProductService {
                 .map(categoryId -> categoryRepository.findById(categoryId)
                         .orElseThrow(() -> new EntityNotFoundException(Category.class, categoryId)))
                 .collect(Collectors.toSet());
+    }
+
+    private Set<Long> coalesceCategoryIds(ProductRequestDTO request) {
+        if (request == null) return null;
+        Set<Long> ids = request.getCategoryIds();
+        if (ids != null && !ids.isEmpty()) return ids;
+        var list = request.getCategoriesIds();
+        if (list == null) return null;
+        return new java.util.HashSet<>(list);
+    }
+
+    private void applyCategories(Product product, Set<Long> categoryIds) {
+        if (categoryIds == null) return;
+        Set<Category> categories = findCategoriesByIds(categoryIds);
+        product.setCategories(categories);
+        productRepository.save(product);
     }
 }
