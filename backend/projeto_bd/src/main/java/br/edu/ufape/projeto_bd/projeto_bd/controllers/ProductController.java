@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.ProductRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.ProductResponseDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.services.IProductService;
 
 @RestController
 @RequestMapping("api/products")
@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class ProductController {
 
-    private final ProductService productService;
+    private final IProductService productService;
 
     @PostMapping("/create")
     public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductRequestDTO request) {
