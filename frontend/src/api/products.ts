@@ -157,7 +157,12 @@ export async function updateProduct(id: number | string, data: UpdateProductRequ
 }
 
 export async function deleteProduct(id: number | string): Promise<{ ok: true; id: number }> {
-  // Mock: simulate deletion with delay
-  await new Promise((r) => setTimeout(r, 300))
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const res = await fetch(`${base}/api/products/delete/${id}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to delete product: ${res.status} ${res.statusText}`)
+  }
   return { ok: true, id: typeof id === 'string' ? parseInt(id, 10) : id }
 }

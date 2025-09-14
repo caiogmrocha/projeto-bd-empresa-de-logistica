@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router"
-import { useInfiniteQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Table,
   TableBody,
@@ -11,14 +11,16 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { getProducts, type Product, type GetProductsParams } from "@/api/products"
+import { getProducts, deleteProduct, type Product, type GetProductsParams } from "@/api/products"
 import type { PageResponse } from "@/api/pagination"
 import { usePaginationSearchState } from "@/hooks/use-pagination-search-state"
 import { useDebounced } from "@/hooks/use-debounced"
 import { StatusPill } from "@/components/status-pill"
+import { toast } from "sonner"
 
 export function ProductsListPage() {
   const { limit, search, setState } = usePaginationSearchState()
+  const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = React.useState(search)
   const debouncedSearch = useDebounced(searchInput, 400)
 
@@ -43,6 +45,34 @@ export function ProductsListPage() {
   })
 
   const rows = query.data?.pages.flatMap((p) => p.content) ?? []
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number | string) => deleteProduct(id),
+    onSuccess: (_res, idArg) => {
+      // Remove o item deletado de todos os caches de produtos (todas as variações de queryKey)
+      const queries = queryClient.getQueriesData<PageResponse<Product>>({ queryKey: ["products"] })
+      for (const [key, data] of queries) {
+        if (!data) continue
+        const newPages = data.pages.map((pg) => ({
+          ...pg,
+          content: pg.content.filter((item) => item.id !== Number(idArg)),
+          numberOfElements: pg.content.filter((item) => item.id !== Number(idArg)).length,
+          totalElements: Math.max(0, (pg.totalElements ?? 0) - 1),
+        }))
+        queryClient.setQueryData(key, { ...data, pages: newPages })
+      }
+      toast.success(`Produto ${idArg} excluído com sucesso`)
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+
+  const handleDelete = React.useCallback(async (id: number) => {
+    const ok = window.confirm(`Deseja realmente excluir o produto ${id}?`)
+    if (!ok) return
+    await deleteMutation.mutateAsync(id)
+  }, [deleteMutation])
   const firstPage = query.data?.pages[0]
   const total = firstPage?.totalElements ?? 0
 
@@ -121,8 +151,8 @@ export function ProductsListPage() {
                     <Button asChild size="sm" variant="outline">
                       <Link to={`/products/${p.id}/edit`}>Editar</Link>
                     </Button>
-                    <Button asChild size="sm" variant="destructive">
-                      <Link to={`/products/${p.id}/delete`}>Excluir</Link>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(p.id)} disabled={deleteMutation.isPending}>
+                      {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
                     </Button>
                   </TableCell>
                 </TableRow>
