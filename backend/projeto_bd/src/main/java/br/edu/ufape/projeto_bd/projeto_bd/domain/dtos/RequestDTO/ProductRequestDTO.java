@@ -3,6 +3,7 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -29,4 +30,5 @@ public class ProductRequestDTO {
     // Map<ISO_CODE, value>
     private Map<String, String> names;
     private Map<String, String> descriptions;
+    private Set<Long> categoryIds;
 }

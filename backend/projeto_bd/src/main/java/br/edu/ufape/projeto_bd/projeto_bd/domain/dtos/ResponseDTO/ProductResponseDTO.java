@@ -3,6 +3,7 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +19,7 @@ public class ProductResponseDTO {
     private LocalDateTime warranty_date;
     private ProductStatus status;
     private BigDecimal minimumSalePrice;
+    private Set<CategoryResponseDTO> categories;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -7,18 +7,20 @@ import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.ProductRequestD
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.ProductResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Product;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {CategoryMapper.class})
 public interface ProductMapper {
 
     ProductResponseDTO toResponseDTO(Product product);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "categories", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     Product toEntity(ProductRequestDTO requestDTO);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "categories", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)

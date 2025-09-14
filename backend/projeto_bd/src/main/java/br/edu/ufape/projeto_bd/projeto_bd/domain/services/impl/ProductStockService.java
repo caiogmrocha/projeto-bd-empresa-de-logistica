@@ -108,7 +108,6 @@ public class ProductStockService implements IProductStockService {
     private void validateCodeUniqueness(String code) {
         if (productStockRepository.existsByCode(code)) {
             throw new BusinessRuleException("O código de estoque '" + code + "' já está em uso.");
-            // criar exceção personalizada
         }
     }
 
