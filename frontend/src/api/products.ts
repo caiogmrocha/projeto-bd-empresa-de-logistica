@@ -31,6 +31,8 @@ export interface Product {
   minimumSalePrice: number
   createdAt: string
   updatedAt: string
+  names?: Record<string, string>
+  descriptions?: Record<string, string>
 }
 
 export type SortOrder = 'asc' | 'desc'
@@ -72,11 +74,13 @@ export async function getProducts(params: GetProductsParams = {}): Promise<PageR
 }
 
 export async function createProduct(data: CreateProductRequest) {
-  // Backend ProductRequestDTO expects: warranty_date (LocalDateTime), status, minimumSalePrice
+  // Backend ProductRequestDTO expects: warranty_date, status, minimumSalePrice, names, descriptions
   const payload = {
     warranty_date: new Date(data.warrantyDate).toISOString(),
     status: data.status,
     minimumSalePrice: Number(data.minimumSalePrice ?? 0),
+    names: data.names,
+    descriptions: data.descriptions,
   }
 
   const base = API_BASE_URL?.replace(/\/$/, '') || ''
@@ -103,11 +107,10 @@ export async function getProduct(id: number | string): Promise<ProductDetails> {
     throw new Error(`Failed to fetch product: ${res.status} ${res.statusText}`)
   }
   const p = await res.json() as Product
-  // Map backend response to ProductDetails used by the form (fill missing fields with defaults)
   return {
     id: p.id,
-    names: {},
-    descriptions: {},
+    names: p.names ?? {},
+    descriptions: p.descriptions ?? {},
     warrantyDate: new Date(p.warranty_date),
     status: p.status as ProductStatus,
     minimumSalePrice: Number(p.minimumSalePrice ?? 0),
@@ -123,6 +126,8 @@ export async function updateProduct(id: number | string, data: UpdateProductRequ
     warranty_date: new Date(data.warrantyDate).toISOString(),
     status: data.status,
     minimumSalePrice: Number(data.minimumSalePrice ?? 0),
+    names: data.names,
+    descriptions: data.descriptions,
   }
   const base = API_BASE_URL?.replace(/\/$/, '') || ''
   const res = await fetch(`${base}/api/products/update/${id}`, {

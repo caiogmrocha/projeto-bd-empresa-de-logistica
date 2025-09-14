@@ -1,4 +1,4 @@
-export interface PageResponse<Content extends Record<string | number | symbol, unknown>> {
+export interface PageResponse<Content> {
   content: Content[];
   pageable: Pageable;
   totalPages: number;

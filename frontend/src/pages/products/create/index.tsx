@@ -18,7 +18,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Checkbox } from "@/components/ui/checkbox"
 import { MultiSelect } from "@/components/multi-select"
 import { toast } from "sonner"
 
@@ -32,19 +31,19 @@ const ProductFormSchema = z.object({
     .min(1, { message: "Informe a descrição do produto" })
     .max(255, { message: "A descrição deve ter no máximo 255 caracteres" })
   ),
-  warrantyDate: z.date({ required_error: "Informe a data de garantia" }),
-  status: z.nativeEnum(ProductStatus, { required_error: "Selecione o status do produto" }),
-  minimumSalePrice: z.number({ invalid_type_error: "Preço mínimo deve ser numérico" })
+  warrantyDate: z.date({ message: "Informe a data de garantia" }),
+  status: z.enum(ProductStatus, { message: "Selecione o status do produto" }),
+  minimumSalePrice: z.number({ message: "Preço mínimo deve ser numérico" })
     .min(0, { message: "Preço mínimo não pode ser negativo" })
     .optional(),
-  stock: z.number({ invalid_type_error: "Estoque deve ser numérico" })
+  stock: z.number({ message: "Estoque deve ser numérico" })
     .min(0, { message: "Estoque não pode ser negativo" })
     .optional(),
   categoriesIds: z.array(z.number().int({ message: "Categoria inválida" }).positive({ message: "Categoria inválida" })).optional(),
-  warehouseId: z.number({ required_error: "Selecione um armazém" })
+  warehouseId: z.number({ message: "Selecione um armazém" })
     .int({ message: "Armazém inválido" })
     .positive({ message: "Armazém inválido" }),
-  supplierId: z.number({ required_error: "Selecione um fornecedor" })
+  supplierId: z.number({ message: "Selecione um fornecedor" })
     .int({ message: "Fornecedor inválido" })
     .positive({ message: "Fornecedor inválido" }),
 })

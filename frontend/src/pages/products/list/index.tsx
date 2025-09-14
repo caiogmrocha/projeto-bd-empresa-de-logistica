@@ -18,7 +18,7 @@ import { useDebounced } from "@/hooks/use-debounced"
 import { StatusPill } from "@/components/status-pill"
 
 export function ProductsListPage() {
-  const { page: _pageIgnored, limit, search, setState } = usePaginationSearchState()
+  const { limit, search, setState } = usePaginationSearchState()
   const [searchInput, setSearchInput] = React.useState(search)
   const debouncedSearch = useDebounced(searchInput, 400)
 
@@ -45,7 +45,6 @@ export function ProductsListPage() {
   const rows = query.data?.pages.flatMap((p) => p.content) ?? []
   const firstPage = query.data?.pages[0]
   const total = firstPage?.totalElements ?? 0
-  const totalPages = firstPage?.totalPages ?? Math.max(1, Math.ceil(total / limit))
 
   const toggleSort = (key: NonNullable<GetProductsParams['sortBy']>) => {
     if (sortBy === key) {
@@ -55,6 +54,13 @@ export function ProductsListPage() {
       setOrder('asc')
     }
   }
+
+  const displayName = React.useCallback((product: Product) => {
+    const n = product.names || {}
+    const order = ['pt-BR', 'pt', 'en', ...Object.keys(n)]
+    for (const key of order) if (n[key]) return n[key]
+    return '(sem nome)'
+  }, [])
 
   return (
     <div className="w-full">
@@ -83,6 +89,7 @@ export function ProductsListPage() {
                   ID {sortBy === 'id' ? (order === 'asc' ? '▲' : '▼') : ''}
                 </button>
               </TableHead>
+              <TableHead>Nome</TableHead>
               <TableHead>
                 <button className="inline-flex items-center gap-1" onClick={() => toggleSort('status')}>
                   Status {sortBy === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}
@@ -106,6 +113,7 @@ export function ProductsListPage() {
               rows.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.id}</TableCell>
+                  <TableCell className="truncate max-w-[240px]" title={displayName(p)}>{displayName(p)}</TableCell>
                   <TableCell><StatusPill status={p.status} /></TableCell>
                   <TableCell className="text-right">{typeof p.minimumSalePrice === 'number' ? p.minimumSalePrice.toLocaleString(undefined, { style: 'currency', currency: 'BRL' }) : String(p.minimumSalePrice)}</TableCell>
                   <TableCell className="text-right">{new Date(p.createdAt).toLocaleString()}</TableCell>
@@ -118,8 +126,7 @@ export function ProductsListPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
+              ))) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
                   {query.isLoading ? 'Carregando...' : 'Nenhum resultado.'}
