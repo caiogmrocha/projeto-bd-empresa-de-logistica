@@ -23,27 +23,35 @@ import { MultiSelect } from "@/components/multi-select"
 import { toast } from "sonner"
 
 const ProductFormSchema = z.object({
-  names: z.record(z.string(), z.string()
-    .min(1, { message: "Informe o nome do produto" })
-    .max(255, { message: "O nome deve ter no máximo 255 caracteres" })
-  ),
-  descriptions: z.record(z.string(), z.string()
-    .min(1, { message: "Informe a descrição do produto" })
-    .max(255, { message: "A descrição deve ter no máximo 255 caracteres" })
-  ),
-  warrantyDate: z.date({ required_error: "Informe a data de garantia" }),
-  status: z.nativeEnum(ProductStatus, { required_error: "Selecione o status do produto" }),
-  minimumSalePrice: z.number({ invalid_type_error: "Preço mínimo deve ser numérico" })
+  names: z
+    .record(z.string(), z.string().max(255, { message: "O nome deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos um nome em algum idioma" })
+      }
+    }),
+  descriptions: z
+    .record(z.string(), z.string().max(255, { message: "A descrição deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos uma descrição em algum idioma" })
+      }
+    }),
+  warrantyDate: z.date({ message: "Informe a data de garantia" }),
+  status: z.enum(ProductStatus),
+  minimumSalePrice: z.number({ message: "Preço mínimo deve ser numérico" })
     .min(0, { message: "Preço mínimo não pode ser negativo" })
     .optional(),
-  stock: z.number({ invalid_type_error: "Estoque deve ser numérico" })
+  stock: z.number({ message: "Estoque deve ser numérico" })
     .min(0, { message: "Estoque não pode ser negativo" })
     .optional(),
   categoriesIds: z.array(z.number().int({ message: "Categoria inválida" }).positive({ message: "Categoria inválida" })).optional(),
-  warehouseId: z.number({ required_error: "Selecione um armazém" })
+  warehouseId: z.number({ message: "Selecione um armazém" })
     .int({ message: "Armazém inválido" })
     .positive({ message: "Armazém inválido" }),
-  supplierId: z.number({ required_error: "Selecione um fornecedor" })
+  supplierId: z.number({ message: "Selecione um fornecedor" })
     .int({ message: "Fornecedor inválido" })
     .positive({ message: "Fornecedor inválido" }),
 })
@@ -62,7 +70,7 @@ export const ProductEditPage: React.FC = () => {
   const filteredSuppliers = useMemo(() => suppliers.filter(s => supplierType === 'PF' ? s.type === 'natural_person' : s.type === 'legal_entity'), [suppliers, supplierType])
   const queryClient = useQueryClient()
 
-const productQuery = useQuery<ProductDetails>({
+  const productQuery = useQuery<ProductDetails>({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId),
     enabled: !!productId,
@@ -388,11 +396,11 @@ const productQuery = useQuery<ProductDetails>({
                         <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                           <FormControl>
                             <SelectTrigger className="w-full">
-<SelectValue placeholder={filteredSuppliers.length ? "Selecione o fornecedor" : "Nenhum fornecedor cadastrado"} />
+                              <SelectValue placeholder={filteredSuppliers.length ? "Selecione o fornecedor" : "Nenhum fornecedor cadastrado"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-{filteredSuppliers.length === 0 ? (
+                            {filteredSuppliers.length === 0 ? (
                               <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum fornecedor cadastrado</div>
                             ) : (
                               filteredSuppliers.map((s: Supplier) => (

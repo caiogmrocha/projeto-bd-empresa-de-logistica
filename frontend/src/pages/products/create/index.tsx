@@ -23,16 +23,24 @@ import { toast } from "sonner"
 
 // Dynamic schema using records so we can support any set of language ISO codes
 const ProductFormSchema = z.object({
-  names: z.record(z.string(), z.string()
-    .min(1, { message: "Informe o nome do produto" })
-    .max(255, { message: "O nome deve ter no máximo 255 caracteres" })
-  ),
-  descriptions: z.record(z.string(), z.string()
-    .min(1, { message: "Informe a descrição do produto" })
-    .max(255, { message: "A descrição deve ter no máximo 255 caracteres" })
-  ),
+  names: z
+    .record(z.string(), z.string().max(255, { message: "O nome deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos um nome em algum idioma" })
+      }
+    }),
+  descriptions: z
+    .record(z.string(), z.string().max(255, { message: "A descrição deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos uma descrição em algum idioma" })
+      }
+    }),
   warrantyDate: z.date({ message: "Informe a data de garantia" }),
-  status: z.enum(ProductStatus, { message: "Selecione o status do produto" }),
+  status: z.enum(ProductStatus),
   minimumSalePrice: z.number({ message: "Preço mínimo deve ser numérico" })
     .min(0, { message: "Preço mínimo não pode ser negativo" })
     .optional(),
@@ -84,6 +92,12 @@ export const ProductCreatePage: React.FC = () => {
     defaultValues,
     mode: "onSubmit",
   })
+
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length > 0) {
+      console.log("Erros de validação:", form.formState.errors)
+    }
+  }, [form.formState.errors])
 
   // Reset form defaults when language list changes so fields appear populated
   useEffect(() => {
