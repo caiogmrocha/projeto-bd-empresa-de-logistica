@@ -2,11 +2,10 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
-
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
+import org.springframework.transaction.annotation.Transactional;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.LegalEntity;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.NaturalPerson;
@@ -33,6 +32,7 @@ public class SupplierService implements ISupplierService {
     private final SupplierMapper supplierMapper;
 
     @Override
+    @Transactional
     public SupplierResponseDTO createSupplier(SupplierRequestDTO supplierRequest) {
         if (supplierRequest.getSupplierType() == SupplierType.NATURAL_PERSON) {
             if (supplierRequest.getCpf() != null &&
@@ -69,6 +69,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional (readOnly = true)
     public List<SupplierResponseDTO> findAllSuppliers() {
         List<Supplier> suppliers = supplierRepository.findAll();
         return suppliers.stream()
@@ -77,6 +78,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SupplierResponseDTO findSupplierById(Long id) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Supplier.class, id));
@@ -85,6 +87,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional
     public SupplierResponseDTO updateSupplier(Long id, SupplierRequestDTO supplierRequest) {
         Supplier supplierToUpdate = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Supplier.class, id));
@@ -120,6 +123,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional
     public void deleteSupplier(Long id) {
         if (!supplierRepository.existsById(id)) {
             throw new EntityNotFoundException(Supplier.class, id);

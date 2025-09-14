@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.edu.ufape.projeto_bd.projeto_bd.controllers.SupplierController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.SupplierService;
 

@@ -1,8 +1,8 @@
-package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos;
+package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO;
 
 import org.hibernate.validator.constraints.br.CNPJ;
 import org.hibernate.validator.constraints.br.CPF;
-
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
 import br.edu.ufape.projeto_bd.projeto_bd.utils.ValidEnum;
 import jakarta.validation.Valid;
