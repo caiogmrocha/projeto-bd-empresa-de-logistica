@@ -2,6 +2,7 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -24,4 +25,6 @@ public class ProductRequestDTO {
     @NotNull(message = "O preço mínimo de venda é obrigatório.")
     @PositiveOrZero(message = "O preço mínimo de venda não pode ser negativo.")
     private BigDecimal minimumSalePrice;
+
+    private Set<Long> categoryIds;
 }
