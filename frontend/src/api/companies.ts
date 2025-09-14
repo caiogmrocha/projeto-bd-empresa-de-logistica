@@ -1,37 +1,105 @@
-// src/api/companies.ts
-// Mocked API for creating companies. Replace with real HTTP calls when ready.
+import type { Address } from "./suppliers";
 
-export type CreateCompanyInput = {
-  name: string
-  email?: string
-  website?: string
+export interface Company {
+  id: number;
+  legalName: string;
+  tradeName: string;
+  cnpj: string;
+  phones: string[];
+  emails: string[];
+  address: Address;
+  createdAt: string;
 }
 
-export type Company = CreateCompanyInput & { id: string; createdAt: string }
-
-// Simulate an API delay and return the created record
-export async function createCompany(input: CreateCompanyInput): Promise<Company> {
-  await wait(800)
-  return {
-    id: generateId(),
-    createdAt: new Date().toISOString(),
-    ...input,
-  }
+export interface CompanyRequest {
+  legalName: string;
+  tradeName: string;
+  cnpj: string;
+  phones: string[];
+  emails: string[];
+  address: Address;
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+export interface CompanyUpdate {
+    legalName?: string;
+    tradeName?: string;
+    phones?: string[];
+    emails?: string[];
+    address?: Address;
 }
 
-function generateId() {
-  // Prefer Web Crypto if available (in browsers), fallback to timestamp-based id
-  try {
-    // @ts-expect-error: crypto may not exist in some runtimes
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      // @ts-expect-error: crypto may not exist in some runtimes
-      return crypto.randomUUID()
+export interface CompaniesPage {
+    content: Company[];
+    page: number;
+    size: number;
+    totalElements: number;
+}
+
+async function handleFetchErrors(response: Response, defaultErrorMessage: string) {
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.message || defaultErrorMessage);
+      } catch {
+        throw new Error(defaultErrorMessage);
+      }
     }
-  } catch {}
-  return `cmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+export async function createCompany(data: CompanyRequest): Promise<Company> {
+    const response = await fetch("/api/companies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    await handleFetchErrors(response, "Falha ao criar empresa");
+    return response.json() as Promise<Company>;
+}
+
+export async function getCompanies(params: {
+    page?: number;
+    size?: number;
+    tradeName?: string;
+    sortBy?: string;
+    direction?: "asc" | "desc";
+} = {}): Promise<CompaniesPage> {
+    const query = new URLSearchParams({
+        page: String(params.page ?? 0),
+        size: String(params.size ?? 10),
+        sortBy: params.sortBy ?? "id",
+        direction: params.direction ?? "asc",
+    });
+
+    if (params.tradeName) {
+        query.set("tradeName", params.tradeName);
+    }
+
+    const response = await fetch(`/api/companies?${query.toString()}`);
+    await handleFetchErrors(response, "Falha ao buscar empresas");
+    return response.json() as Promise<CompaniesPage>;
+}
+
+export async function getCompany(id: number | string): Promise<Company> {
+    const response = await fetch(`/api/companies/${id}`);
+    await handleFetchErrors(response, "Falha ao buscar empresa");
+    return response.json() as Promise<Company>;
+}
+
+export async function updateCompany(id: number | string, data: CompanyUpdate): Promise<Company> {
+    const response = await fetch(`/api/companies/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    await handleFetchErrors(response, "Falha ao atualizar empresa");
+    return response.json() as Promise<Company>;
+}
+
+export async function deleteCompany(id: number | string): Promise<{ ok: true; id: number | string }> {
+    const response = await fetch(`/api/companies/${id}`, {
+        method: "DELETE",
+    });
+    await handleFetchErrors(response, "Falha ao deletar empresa");
+    
+    return { ok: true, id };
+}
