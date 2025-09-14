@@ -2,6 +2,8 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.entities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
@@ -13,9 +15,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
@@ -44,6 +50,13 @@ public class Product {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ProductStatus status;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+      name = "products_categories", 
+      joinColumns = @JoinColumn(name = "products_id"), 
+      inverseJoinColumns = @JoinColumn(name = "categories_id"))
+    private Set<Category> categories = new HashSet<>();
 
     @PositiveOrZero(message = "O preço minimo de venda não pode ser negativo")
     @Column(name = "minimum_sale_price", nullable = false, precision = 10, scale = 2)
