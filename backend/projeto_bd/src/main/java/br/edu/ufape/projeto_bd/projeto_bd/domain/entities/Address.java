@@ -1,14 +1,15 @@
 package br.edu.ufape.projeto_bd.projeto_bd.domain.entities;
 
 import java.time.LocalDateTime;
-
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,12 +21,13 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "addresses")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE addresses SET deleted_at = NOW() WHERE id = ?")
-@SQLRestriction(value = "SELECT * FROM addresses WHERE deleted_at IS NULL")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class Address {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,6 +60,6 @@ public class Address {
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  @Column(name = "deleted_at", nullable = false)
+  @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 }
