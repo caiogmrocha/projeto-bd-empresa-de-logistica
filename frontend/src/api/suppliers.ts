@@ -7,12 +7,20 @@ export interface Supplier {
   type: SupplierType
 }
 
-// Mocked API to list suppliers. Replace with real HTTP call later.
+const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || process.env.VITE_API_URL || process.env.API_URL || ''
+
+// Fetch suppliers from backend and map enum to UI type
 export async function getSuppliers(): Promise<Supplier[]> {
-  return [
-    { id: 1, name: 'ACME Ltda', type: 'legal_entity' },
-    { id: 2, name: 'João da Silva', type: 'natural_person' },
-    { id: 3, name: 'Globex Corp', type: 'legal_entity' },
-  ]
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const res = await fetch(`${base}/api/suppliers`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch suppliers: ${res.status} ${res.statusText}`)
+  }
+  const data = await res.json() as Array<{ id: number; name: string; supplierType: 'NATURAL_PERSON' | 'LEGAL_ENTITY' }>
+  return data.map((s) => ({
+    id: s.id,
+    name: s.name,
+    type: s.supplierType === 'NATURAL_PERSON' ? 'natural_person' : 'legal_entity',
+  }))
 }
 

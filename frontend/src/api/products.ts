@@ -72,16 +72,24 @@ export async function getProducts(params: GetProductsParams = {}): Promise<PageR
 }
 
 export async function createProduct(data: CreateProductRequest) {
-  const response = await fetch("/api/products", {
+  // Backend ProductRequestDTO expects: warranty_date (LocalDateTime), status, minimumSalePrice
+  const payload = {
+    warranty_date: new Date(data.warrantyDate).toISOString(),
+    status: data.status,
+    minimumSalePrice: Number(data.minimumSalePrice ?? 0),
+  }
+
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const response = await fetch(`${base}/api/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to create product: ${response.statusText}`);
+    throw new Error(`Failed to create product: ${response.status} ${response.statusText}`);
   }
 
   const product = await response.json();

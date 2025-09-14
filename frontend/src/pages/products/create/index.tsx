@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -91,14 +91,17 @@ export const ProductCreatePage: React.FC = () => {
     }
   }, [form, supplierType, suppliers])
 
+  const queryClient = useQueryClient()
   const createProductMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: async () => {
-      alert(`Produto criado com sucesso.`)
+      toast.success(`Produto criado com sucesso.`)
+      // Refresh products list pages
+      await queryClient.invalidateQueries({ queryKey: ["products"] })
       form.reset(defaultValues)
     },
     onError: (err: Error) => {
-      alert(err.message)
+      toast.error(err.message)
     },
   })
 
