@@ -16,6 +16,7 @@ import type { PageResponse } from "@/api/pagination"
 import { usePaginationSearchState } from "@/hooks/use-pagination-search-state"
 import { useDebounced } from "@/hooks/use-debounced"
 import { StatusPill } from "@/components/status-pill"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { toast } from "sonner"
 
 export function ProductsListPage() {
@@ -46,6 +47,9 @@ export function ProductsListPage() {
 
   const rows = query.data?.pages.flatMap((p) => p.content) ?? []
 
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const [pendingId, setPendingId] = React.useState<number | null>(null)
+
   const deleteMutation = useMutation({
     mutationFn: (id: number | string) => deleteProduct(id),
     onSuccess: (_res, idArg) => {
@@ -68,11 +72,21 @@ export function ProductsListPage() {
     },
   })
 
-  const handleDelete = React.useCallback(async (id: number) => {
-    const ok = window.confirm(`Deseja realmente excluir o produto ${id}?`)
-    if (!ok) return
-    await deleteMutation.mutateAsync(id)
-  }, [deleteMutation])
+  const handleAskDelete = React.useCallback((id: number) => {
+    setPendingId(id)
+    setConfirmOpen(true)
+  }, [])
+
+  const onConfirmDelete = React.useCallback(async () => {
+    if (pendingId == null) return
+    try {
+      await deleteMutation.mutateAsync(pendingId)
+    } finally {
+      setConfirmOpen(false)
+      setPendingId(null)
+    }
+  }, [deleteMutation, pendingId])
+
   const firstPage = query.data?.pages[0]
   const total = firstPage?.totalElements ?? 0
 
@@ -151,8 +165,8 @@ export function ProductsListPage() {
                     <Button asChild size="sm" variant="outline">
                       <Link to={`/products/${p.id}/edit`}>Editar</Link>
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(p.id)} disabled={deleteMutation.isPending}>
-                      {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                    <Button size="sm" variant="destructive" onClick={() => handleAskDelete(p.id)} disabled={deleteMutation.isPending}>
+                      Excluir
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -179,6 +193,25 @@ export function ProductsListPage() {
           </Button>
         </div>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Esta ação removerá o produto {pendingId ?? ''}. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={deleteMutation.isPending}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={onConfirmDelete} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
