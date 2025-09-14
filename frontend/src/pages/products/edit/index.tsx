@@ -11,6 +11,8 @@ import { type Supplier } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
 import { useWarehousesQuery } from "@/hooks/use-warehouses-query"
 import { useSuppliersQuery } from "@/hooks/use-suppliers-query"
+import { useCategoriesQuery } from "@/hooks/use-categories-query"
+import type { Category } from "@/api/categories"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,6 +66,7 @@ export const ProductEditPage: React.FC = () => {
   const { data: languages = [] } = useLanguagesQuery()
   const { data: warehouses = [] } = useWarehousesQuery()
   const { data: suppliers = [] } = useSuppliersQuery()
+  const { data: categories = [] } = useCategoriesQuery()
 
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
   const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
@@ -253,6 +256,22 @@ export const ProductEditPage: React.FC = () => {
                     )}
                   />
                 ))}
+              </div>
+
+              {/* Categories */}
+              <div className="space-y-2">
+                <FormItem>
+                  <FormLabel>Categorias</FormLabel>
+                  <MultiSelect
+                    options={categories.map((c: Category) => ({ label: c.name, value: String(c.id) }))}
+                    value={(form.watch('categoriesIds') as unknown as number[] | undefined)?.map((id) => String(id)) ?? []}
+                    onChange={(vals) => {
+                      const ids = vals.map((v) => parseInt(v, 10)).filter((n) => Number.isFinite(n))
+                      form.setValue('categoriesIds', ids as unknown as number[])
+                    }}
+                    placeholder="Selecione categorias..."
+                  />
+                </FormItem>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

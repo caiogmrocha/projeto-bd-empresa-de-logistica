@@ -33,6 +33,7 @@ export interface Product {
   updatedAt: string
   names?: Record<string, string>
   descriptions?: Record<string, string>
+  categoriesIds?: number[]
 }
 
 export type SortOrder = 'asc' | 'desc'
@@ -81,6 +82,7 @@ export async function createProduct(data: CreateProductRequest) {
     minimumSalePrice: Number(data.minimumSalePrice ?? 0),
     names: data.names,
     descriptions: data.descriptions,
+    categoriesIds: data.categoriesIds ?? [],
   }
 
   const base = API_BASE_URL?.replace(/\/$/, '') || ''
@@ -115,7 +117,7 @@ export async function getProduct(id: number | string): Promise<ProductDetails> {
     status: p.status as ProductStatus,
     minimumSalePrice: Number(p.minimumSalePrice ?? 0),
     stock: 0,
-    categoriesIds: [],
+    categoriesIds: p.categoriesIds ?? [],
     warehouseId: 1,
     supplierId: 1,
   }
@@ -128,6 +130,7 @@ export async function updateProduct(id: number | string, data: UpdateProductRequ
     minimumSalePrice: Number(data.minimumSalePrice ?? 0),
     names: data.names,
     descriptions: data.descriptions,
+    categoriesIds: data.categoriesIds ?? [],
   }
   const base = API_BASE_URL?.replace(/\/$/, '') || ''
   const res = await fetch(`${base}/api/products/update/${id}`, {
@@ -141,13 +144,13 @@ export async function updateProduct(id: number | string, data: UpdateProductRequ
   const p = await res.json() as Product
   return {
     id: p.id,
-    names: {},
-    descriptions: {},
+    names: p.names ?? {},
+    descriptions: p.descriptions ?? {},
     warrantyDate: new Date(p.warranty_date),
     status: p.status as ProductStatus,
     minimumSalePrice: Number(p.minimumSalePrice ?? 0),
     stock: 0,
-    categoriesIds: [],
+    categoriesIds: p.categoriesIds ?? [],
     warehouseId: 1,
     supplierId: 1,
   }
