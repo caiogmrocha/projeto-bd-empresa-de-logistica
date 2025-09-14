@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProductService implements IProductService {
-    
+
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final LanguageRepository languageRepository;
@@ -100,12 +100,14 @@ public class ProductService implements IProductService {
     public ProductResponseDTO updateProduct(Long id, ProductRequestDTO request) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Product.class, id));
-        
+
         productMapper.updateProductFromDto(request, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
 
-        // Replace translations
+        // Delete all translations and recreate (ensures clean state and avoids PK conflicts)
         productTranslationRepository.deleteByProductId(updatedProduct.getId());
+        // Ensure deletes hit the DB before inserts in the same transaction
+        productTranslationRepository.flush();
         upsertTranslations(updatedProduct, request.getNames(), request.getDescriptions());
 
         return buildResponseWithTranslations(updatedProduct);
@@ -124,7 +126,6 @@ public class ProductService implements IProductService {
         if (names == null && descriptions == null) return;
         Map<String, String> n = names != null ? names : new HashMap<>();
         Map<String, String> d = descriptions != null ? descriptions : new HashMap<>();
-        // union of keys
         var keys = new java.util.HashSet<>(n.keySet());
         keys.addAll(d.keySet());
         for (String iso : keys) {
