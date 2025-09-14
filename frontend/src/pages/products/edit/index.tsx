@@ -5,7 +5,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-import { getProduct, updateProduct, type Product, ProductStatus, type UpdateProductRequest } from "@/api/products"
+import { getProduct, updateProduct, type ProductDetails, ProductStatus, type UpdateProductRequest } from "@/api/products"
 import { type Warehouse } from "@/api/warehouses"
 import { type Supplier } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
@@ -47,7 +47,7 @@ export const ProductEditPage: React.FC = () => {
   const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
   const filteredSuppliers = useMemo(() => suppliers.filter(s => supplierType === 'PF' ? s.type === 'natural_person' : s.type === 'legal_entity'), [suppliers, supplierType])
 
-  const productQuery = useQuery<Product>({
+const productQuery = useQuery<ProductDetails>({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId),
     enabled: !!productId,
