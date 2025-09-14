@@ -97,37 +97,54 @@ export async function createProduct(data: CreateProductRequest) {
 }
 
 export async function getProduct(id: number | string): Promise<ProductDetails> {
-  // Mock: simulate network delay and return a generated product
-  await new Promise((r) => setTimeout(r, 300))
-  const n = typeof id === 'string' ? parseInt(id, 10) : id
-  const safeId = Number.isFinite(n) && (n as number) > 0 ? (n as number) : 1
-
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const res = await fetch(`${base}/api/products/${id}`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product: ${res.status} ${res.statusText}`)
+  }
+  const p = await res.json() as Product
+  // Map backend response to ProductDetails used by the form (fill missing fields with defaults)
   return {
-    id: safeId,
-    names: {
-      'pt-BR': `Produto ${safeId}`,
-      en: `Product ${safeId}`,
-    },
-    descriptions: {
-      'pt-BR': `Descrição do produto ${safeId}`,
-      en: `Product ${safeId} description`,
-    },
-    warrantyDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * (safeId % 365)),
-    status: safeId % 3 === 0 ? ProductStatus.RETURNED : ProductStatus.TESTED,
-    minimumSalePrice: Math.round((safeId * 7.5) % 1000) + 9.9,
-    stock: (safeId * 13) % 200,
+    id: p.id,
+    names: {},
+    descriptions: {},
+    warrantyDate: new Date(p.warranty_date),
+    status: p.status as ProductStatus,
+    minimumSalePrice: Number(p.minimumSalePrice ?? 0),
+    stock: 0,
     categoriesIds: [],
-    warehouseId: (safeId % 3) + 1,
-    supplierId: (safeId % 3) + 1,
+    warehouseId: 1,
+    supplierId: 1,
   }
 }
 
 export async function updateProduct(id: number | string, data: UpdateProductRequest): Promise<ProductDetails> {
-  // Mock: simulate a network delay and echo back the updated product
-  await new Promise((r) => setTimeout(r, 400))
+  const payload = {
+    warranty_date: new Date(data.warrantyDate).toISOString(),
+    status: data.status,
+    minimumSalePrice: Number(data.minimumSalePrice ?? 0),
+  }
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const res = await fetch(`${base}/api/products/update/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to update product: ${res.status} ${res.statusText}`)
+  }
+  const p = await res.json() as Product
   return {
-    id: typeof id === 'string' ? parseInt(id, 10) : id,
-    ...data,
+    id: p.id,
+    names: {},
+    descriptions: {},
+    warrantyDate: new Date(p.warranty_date),
+    status: p.status as ProductStatus,
+    minimumSalePrice: Number(p.minimumSalePrice ?? 0),
+    stock: 0,
+    categoriesIds: [],
+    warehouseId: 1,
+    supplierId: 1,
   }
 }
 
