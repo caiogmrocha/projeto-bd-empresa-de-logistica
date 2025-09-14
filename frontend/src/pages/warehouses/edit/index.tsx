@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
-import { useParams } from "react-router"
+import { useParams, useNavigate } from "react-router"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,7 +19,7 @@ const WarehouseFormSchema = z.object({
   city: z.string().min(1, "Cidade é obrigatória").max(50, "Cidade deve ter no máximo 50 caracteres"),
   street: z.string().min(1, "Rua é obrigatória").max(100, "Rua deve ter no máximo 100 caracteres"),
   number: z.string().min(1, "Número é obrigatório").max(10, "Número deve ter no máximo 10 dígitos"),
-  zipCode: z.string().min(1, "CEP é obrigatório").max(8, "CEP deve ter no máximo 8 dígitos"),```
+  zipCode: z.string().min(1, "CEP é obrigatório").max(8, "CEP deve ter no máximo 8 dígitos"),
 })
 
 type WarehouseFormValues = z.infer<typeof WarehouseFormSchema>
@@ -31,6 +31,7 @@ export const EditWarehousePage: React.FC = () => {
     queryFn: () => getWarehouse(warehouseId),
     enabled: !!warehouseId,
   })
+  const navigate = useNavigate()
 
   const form = useForm<WarehouseFormValues>({
     resolver: zodResolver(WarehouseFormSchema),
@@ -52,27 +53,39 @@ export const EditWarehousePage: React.FC = () => {
     if (!w) return
     form.reset({
       name: w.name,
-      country: w.country,
-      state: w.state,
-      city: w.city,
-      street: w.street,
-      number: w.number,
-      zipCode: w.zipCode,
+      country: w.address.country,
+      state: w.address.state,
+      city: w.address.city,
+      street: w.address.street,
+      number: w.address.number,
+      zipCode: w.address.zipCode,
     })
   }, [form, warehouseQuery.data])
 
   const mutation = useMutation({
-    mutationFn: (values: WarehouseFormValues) => updateWarehouse(warehouseId, values),
-    onSuccess: () => {
-      toast.success("Warehouse updated successfully")
-    },
-    onError: (err: Error) => {
-      toast.error(err.message)
-    }
-  })
+  mutationFn: (values: WarehouseFormValues) =>
+    updateWarehouse(warehouseId, {
+      name: values.name,
+      address: {
+        country: values.country,
+        state: values.state,
+        city: values.city,
+        street: values.street,
+        number: values.number,
+        zipCode: values.zipCode,
+      },
+    }),
+  onSuccess: () => {
+    toast.success("Warehouse updated successfully")
+  },
+  onError: (err: Error) => {
+    toast.error(err.message)
+  }
+})
 
   function onSubmit(values: WarehouseFormValues) {
     mutation.mutate(values)
+    navigate("/warehouses")
   }
 
   if (warehouseQuery.isLoading) {

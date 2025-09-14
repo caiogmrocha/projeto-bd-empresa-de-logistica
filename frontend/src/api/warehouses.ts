@@ -2,6 +2,10 @@
 // Create payload keyed dynamically by language ISO codes present in the system
 export interface CreateWarehouseRequest {
   name: string
+  address: Address
+}
+
+export interface Address {
   country: string
   state: string
   city: string
@@ -17,7 +21,7 @@ export type Warehouse = {
 } & CreateWarehouseRequest
 
 export async function createWarehouse(data: CreateWarehouseRequest) {
-  const response = await fetch("/api/warehouses/create", {
+  const response = await fetch("http://localhost:8080/api/warehouses/create", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,26 +38,17 @@ export async function createWarehouse(data: CreateWarehouseRequest) {
 }
 
 export async function getWarehouse(id: number | string): Promise<Warehouse> {
-  // Mock: simulate network delay and return a generated warehouse
-  await new Promise((r) => setTimeout(r, 300))
-  const n = typeof id === 'string' ? parseInt(id, 10) : id
-  const safeId = Number.isFinite(n) && (n as number) > 0 ? (n as number) : 1
+  const response = await fetch(`http://localhost:8080/api/warehouses/${id}`);
 
-  return {
-    id: safeId,
-    name: `Warehouse ${safeId}`,
-    country: "Country",
-    state: "State",
-    city: "City",
-    street: "Street",
-    number: "123",
-    zipCode: "00000-000",
-    
+  if (!response.ok) {
+    throw new Error(`Failed to fetch warehouse: ${response.statusText}`);
   }
+  const warehouse = await response.json();
+  return warehouse as Warehouse;
 }
 
 export async function updateWarehouse(id: number | string, data: UpdateWarehouseRequest): Promise<Warehouse> {
-  const response = await fetch(`/api/warehouses/update/${id}`, {
+  const response = await fetch(`http://localhost:8080/api/warehouses/update/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -70,13 +65,13 @@ export async function updateWarehouse(id: number | string, data: UpdateWarehouse
 }
 
 export async function deleteWarehouse(id: number | string): Promise<{ ok: true; id: number }> {
-  const response = await fetch(`/api/warehouses/delete/${id}`, {
+  const response = await fetch(`http://localhost:8080/api/warehouses/delete/${id}`, {
     method: "DELETE",
   });
-  if (!response.ok) {
+  if (response.status === 400) {
     throw new Error(`Falha ao deletar armazém: ${response.statusText}`);
   }
-  return await response.json(); 
+  return { ok: true, id: Number(id) };
 }
 
 export interface GetWarehousesParams {
@@ -86,50 +81,32 @@ export interface GetWarehousesParams {
 }
 
 export interface WarehousesPage {
-  items: Warehouse[]
+  content: Warehouse[]
   total: number
   page: number
   limit: number
 }
 
 export async function getWarehouses(params: GetWarehousesParams = {}): Promise<WarehousesPage> {
-  const page = params.page ?? 1
-  const limit = params.limit ?? 10
-  const search = (params.search ?? "").toLowerCase()
+  const page = params.page ?? 0
+  const size = params.limit ?? 10
+  const search = params.search ?? ""
 
-  // Mocked dataset
-  const MOCK: Warehouse[] = Array.from({ length: 57 }).map((_, i) => {
-    const id = i + 1
-    return {
-      id,
-      name: `Warehouse ${id}`,
-      country: `Country ${id}`,
-      state: `State ${id}`,
-      city: `City ${id}`,
-      street: `Street ${id}`,
-      number: `123 ${id}`,
-      zipCode: `00000-000 ${id}`,
-    }
-  })
+  // Adiciona search somente se tiver algo
+  const searchParam = search ? `&search=${encodeURIComponent(search)}` : ""
 
-  // Filter by search (in any name value)
-  const filtered = search
-    ? MOCK.filter((p) => Object.values(p.name).some((n) => n.toLowerCase().includes(search)))
-    : MOCK
+  const response = await fetch(`http://localhost:8080/api/warehouses?page=${page}&size=${size}${searchParam}`)
 
-  const total = filtered.length
-  const start = (page - 1) * limit
-  const end = start + limit
-  const slice = filtered.slice(start, end)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch warehouses: ${response.statusText}`)
+  }
 
-  // Simulate network latency
-  await new Promise((r) => setTimeout(r, 300))
-
+  const data = await response.json()
   return {
-    items: slice,
-    total,
-    page,
-    limit,
+    content: data.content as Warehouse[],
+    total: data.totalElements as number,
+    page: data.number as number,
+    limit: data.size as number,
   }
 }
 

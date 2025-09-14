@@ -59,12 +59,14 @@ export const WarehouseCreatePage: React.FC = () => {
     // Normalize optional empty strings to undefined
     const payload = {
       ...values,
-      country: values.country || '',
-      state: values.state || '',
-      city: values.city || '',
-      street: values.street || '',
-      number: values.number || '',
-      zipCode: values.zipCode || '',
+      address: {
+        country: values.country,
+        state: values.state,
+        city: values.city,
+        street: values.street,
+        number: values.number,
+        zipCode: values.zipCode,
+      }
     }
     mutation.mutate(payload)
   }

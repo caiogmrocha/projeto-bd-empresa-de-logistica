@@ -1,103 +1,36 @@
 import * as React from "react"
 import {
   type ColumnDef,
+  type SortingState,
   type ColumnFiltersState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
-  type SortingState,
+  getFilteredRowModel,
   useReactTable,
-  type VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Link } from "react-router"
-
-const data: Warehouse[] = [
-  {
-    id: "1a2b3c4d",
-    name: "Kenneth Logistics",
-    country: "USA",
-    state: "California",
-    city: "Los Angeles",
-    street: "Sunset Blvd",
-    number: "1234",
-    zipCode: "90001",
-  },
-  {
-    id: "2x9y8z7w",
-    name: "Diana Transport",
-    country: "USA",
-    state: "New York",
-    city: "New York City",
-    street: "5th Avenue",
-    number: "5678",
-    zipCode: "10001",
-  },
-  {
-    id: "5f6g7h8i",
-    name: "Global Freight",
-    country: "Canada",
-    state: "Ontario",
-    city: "Toronto",
-    street: "Queen St",
-    number: "9101",
-    zipCode: "M5H 2N2",
-  },
-  {
-    id: "3u1reuv4",
-    name: "Abe Logistics",
-    country: "USA",
-    state: "California",
-    city: "Los Angeles",
-    street: "Sunset Blvd",
-    number: "1234",
-    zipCode: "90001",
-  },
-]
-
-export type Warehouse = {
-  id: string
-  name: string
-  country: string
-  state: string
-  city: string
-  street: string
-  number: string
-  zipCode: string
-}
+import { getWarehouses, type Warehouse } from "@/api/warehouses"
 
 const columns: ColumnDef<Warehouse>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
@@ -114,62 +47,53 @@ const columns: ColumnDef<Warehouse>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Nome
-          <ArrowUpDown />
-        </Button>
-      )
-    },
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Nome <ArrowUpDown />
+      </Button>
+    ),
     cell: ({ row }) => <div>{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "country",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          País
-          <ArrowUpDown />
-        </Button>
-      )
-    },
+    accessorFn: (row) => row.address.country,
+    id: "country",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        País <ArrowUpDown />
+      </Button>
+    ),
     cell: ({ row }) => <div>{row.getValue("country")}</div>,
   },
   {
-    accessorKey: "state",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Estado
-          <ArrowUpDown />
-        </Button>
-      )
-    },
+    accessorFn: (row) => row.address.state,
+    id: "state",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Estado <ArrowUpDown />
+      </Button>
+    ),
     cell: ({ row }) => <div>{row.getValue("state")}</div>,
   },
   {
-    accessorKey: "city",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Cidade
-          <ArrowUpDown />
-        </Button>
-      )
-    },
+    accessorFn: (row) => row.address.city,
+    id: "city",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Cidade <ArrowUpDown />
+      </Button>
+    ),
     cell: ({ row }) => <div>{row.getValue("city")}</div>,
   },
   {
@@ -193,21 +117,56 @@ const columns: ColumnDef<Warehouse>[] = [
 ]
 
 export function WarehousesListPage() {
+  const [data, setData] = React.useState<Warehouse[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [page, setPage] = React.useState(0)
+  const [limit] = React.useState(10)
+  const [total, setTotal] = React.useState(0)
+  const [searchInput, setSearchInput] = React.useState("")
+  const [search, setSearch] = React.useState("")
+
+  // Debounce para busca (500ms)
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(0) 
+    }, 500)
+
+    return () => clearTimeout(handler)
+  }, [searchInput])
+
+  const fetchData = React.useCallback(() => {
+    setLoading(true)
+    getWarehouses({ page, limit, search })
+      .then((result) => {
+        setData(result.content)
+        setTotal(result.total)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setData([])
+        setLoading(false)
+      })
+  }, [page, limit, search])
+
+  React.useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const table = useReactTable({
     data,
     columns,
+    manualPagination: true,
+    pageCount: Math.ceil(total / limit),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -217,6 +176,14 @@ export function WarehousesListPage() {
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination: { pageIndex: page, pageSize: limit },
+    },
+    onPaginationChange: (updater) => {
+      const newPage =
+        typeof updater === "function"
+          ? updater({ pageIndex: page, pageSize: limit }).pageIndex
+          : updater.pageIndex
+      setPage(newPage)
     },
   })
 
@@ -225,10 +192,8 @@ export function WarehousesListPage() {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filtrar por nome..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="max-w-sm"
         />
         <DropdownMenu>
@@ -241,66 +206,49 @@ export function WarehousesListPage() {
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   Nenhum resultado.
                 </TableCell>
               </TableRow>
@@ -308,6 +256,7 @@ export function WarehousesListPage() {
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
@@ -318,7 +267,7 @@ export function WarehousesListPage() {
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            disabled={page === 0}
           >
             Anterior
           </Button>
@@ -326,7 +275,7 @@ export function WarehousesListPage() {
             variant="outline"
             size="sm"
             onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            disabled={page >= Math.ceil(total / limit) - 1}
           >
             Próximo
           </Button>

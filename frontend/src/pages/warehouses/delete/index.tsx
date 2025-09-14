@@ -37,7 +37,7 @@ export const WarehouseDeletePage: React.FC = () => {
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir o armazém {warehouseId}? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir o armazém? Esta ação não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
