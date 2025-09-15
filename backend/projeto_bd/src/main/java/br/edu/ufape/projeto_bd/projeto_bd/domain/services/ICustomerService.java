@@ -11,7 +11,7 @@ public interface ICustomerService {
 
     public CustomerResponseDTO findCustomerById(Long id);
 
-    Page<CustomerResponseDTO> findAllCustomers(Pageable pageable);
+    Page<CustomerResponseDTO> findAllCustomers(String name, Pageable pageable);
 
     public CustomerResponseDTO updateCustomer(Long id, CustomerRequestDTO request);
 
