@@ -2,6 +2,8 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
 import lombok.AllArgsConstructor;
@@ -21,4 +23,10 @@ public class ProductResponseDTO {
     private Set<CategoryResponseDTO> categories;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Map<ISO_CODE, value>
+    private Map<String, String> names;
+    private Map<String, String> descriptions;
+
+    private List<Long> categoriesIds;
 }

@@ -68,6 +68,22 @@ const data = {
         },
       ],
     },
+    {
+      title: "Produtos",
+      url: "/products",
+      icon: Building2,
+      isActive: true,
+      items: [
+        {
+          title: "Listagem",
+          url: "/products",
+        },
+        {
+          title: "Criação",
+          url: "/products/create",
+        },
+      ],
+    },
     // {
     //   title: "Models",
     //   url: "#",

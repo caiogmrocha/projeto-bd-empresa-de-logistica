@@ -10,7 +10,7 @@ public interface ICategoryService {
 
     public CategoryResponseDTO findCategoryById(Long id);
 
-    Page<CategoryResponseDTO> findAllCategories(Pageable pageable);
+    Page<CategoryResponseDTO> findAllCategories(Pageable pageable, String search);
 
     public CategoryResponseDTO updateCategory(Long id, CategoryRequestDTO request);
 
