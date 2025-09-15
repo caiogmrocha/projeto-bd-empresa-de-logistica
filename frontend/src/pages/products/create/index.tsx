@@ -62,7 +62,7 @@ type ProductFormValues = z.infer<typeof ProductFormSchema>
 
 export const ProductCreatePage: React.FC = () => {
   const { data: languages = [], isLoading: loadingLangs } = useLanguagesQuery()
-  const { data: warehouses = [] } = useWarehousesQuery()
+  const { data: warehouses } = useWarehousesQuery()
   const { data: suppliers = [] } = useSuppliersQuery()
   const { data: categories = [] } = useCategoriesQuery()
 
@@ -88,7 +88,7 @@ const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
       minimumSalePrice: 0,
       stock: 0,
       categoriesIds: [],
-      warehouseId: warehouses[0]?.id ?? 1,
+      warehouseId: warehouses?.content[0]?.id ?? 1,
       supplierId: suppliers[0]?.id ?? 1,
     }
   }, [languages, warehouses, suppliers])
@@ -227,6 +227,11 @@ const current = suppliers.find((s: Supplier) => s.id === currentId)
                           <Input placeholder={`Nome (${iso})`} {...field} />
                         </FormControl>
                         <FormMessage />
+                        {(((form.formState.errors.names as unknown as { root?: { message?: string }; message?: string })?.root?.message) || ((form.formState.errors.names as unknown as { root?: { message?: string }; message?: string })?.message)) && (
+                          <p className="text-xs text-destructive mt-1">
+                            {((form.formState.errors.names as unknown as { root?: { message?: string }; message?: string })?.root?.message) || ((form.formState.errors.names as unknown as { root?: { message?: string }; message?: string })?.message)}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -248,6 +253,11 @@ const current = suppliers.find((s: Supplier) => s.id === currentId)
                           <Input placeholder={`Descrição (${iso})`} {...field} />
                         </FormControl>
                         <FormMessage />
+                        {(((form.formState.errors.descriptions as unknown as { root?: { message?: string }; message?: string })?.root?.message) || ((form.formState.errors.descriptions as unknown as { root?: { message?: string }; message?: string })?.message)) && (
+                          <p className="text-xs text-destructive mt-1">
+                            {((form.formState.errors.descriptions as unknown as { root?: { message?: string }; message?: string })?.root?.message) || ((form.formState.errors.descriptions as unknown as { root?: { message?: string }; message?: string })?.message)}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -366,14 +376,14 @@ const current = suppliers.find((s: Supplier) => s.id === currentId)
                       <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                         <FormControl>
                           <SelectTrigger className="w-full">
-<SelectValue placeholder={warehouses.length ? "Selecione o armazém" : "Nenhum armazém cadastrado"} />
+                            <SelectValue placeholder={warehouses?.content?.length ? "Selecione o armazém" : "Nenhum armazém cadastrado"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-{warehouses.length === 0 ? (
+                        {warehouses?.content?.length === 0 ? (
                             <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum armazém cadastrado</div>
                           ) : (
-                            warehouses.map((w: Warehouse) => (
+                            warehouses?.content?.map((w: Warehouse) => (
                               <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
                             ))
                           )}
