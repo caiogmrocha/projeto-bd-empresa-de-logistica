@@ -99,7 +99,7 @@ export async function getCustomers(params: GetCustomersParams = {}): Promise<Cus
   const search = params.search ?? ""
 
   // Adiciona search somente se tiver algo
-  const searchParam = search ? `&search=${encodeURIComponent(search)}` : ""
+  const searchParam = search ? `&name=${encodeURIComponent(search)}` : ""
 
   const response = await fetch(
     `http://localhost:8080/api/customers?page=${page}&size=${size}${searchParam}`

@@ -93,7 +93,7 @@ export async function getWarehouses(params: GetWarehousesParams = {}): Promise<W
   const search = params.search ?? ""
 
   // Adiciona search somente se tiver algo
-  const searchParam = search ? `&search=${encodeURIComponent(search)}` : ""
+  const searchParam = search ? `&name=${encodeURIComponent(search)}` : ""
 
   const response = await fetch(`http://localhost:8080/api/warehouses?page=${page}&size=${size}${searchParam}`)
 
