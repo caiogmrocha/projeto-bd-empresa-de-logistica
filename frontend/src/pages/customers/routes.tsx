@@ -1,7 +1,6 @@
 import type { RouteObject } from "react-router";
 import { CustomersListPage } from "./list";
 import { CustomerCreatePage } from "./create";
-import { CustomerDetailsPage } from "./details/index";
 import { EditCustomerPage } from "./edit/index";
 import { CustomerDeletePage } from "./delete";
 
