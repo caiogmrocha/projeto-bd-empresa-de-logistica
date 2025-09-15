@@ -5,16 +5,15 @@ export interface Language {
   isoCode: string
 }
 
-// Mocked API returning languages configured in the system.
-// Replace with a real HTTP call when the backend is ready.
+const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || process.env.VITE_API_URL || process.env.API_URL || ''
+
+// Fetch languages from backend and map to the UI shape
 export async function getLanguages(): Promise<Language[]> {
-  return [
-    { id: 1, name: 'Português (Brasil)', isoCode: 'pt-BR' },
-    { id: 2, name: 'English', isoCode: 'en' },
-    { id: 3, name: 'Español', isoCode: 'es' },
-    { id: 4, name: 'Français', isoCode: 'fr' },
-    { id: 5, name: 'Deutsch', isoCode: 'de' },
-    { id: 6, name: 'Italiano', isoCode: 'it' },
-    { id: 7, name: 'Nederlands', isoCode: 'nl' }
-  ]
+  const base = API_BASE_URL?.replace(/\/$/, '') || ''
+  const res = await fetch(`${base}/api/languages`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch languages: ${res.status} ${res.statusText}`)
+  }
+  const data = await res.json() as Array<{ id: number; languageName: string; isoCode: string }>
+  return data.map((l) => ({ id: l.id, name: l.languageName, isoCode: l.isoCode }))
 }

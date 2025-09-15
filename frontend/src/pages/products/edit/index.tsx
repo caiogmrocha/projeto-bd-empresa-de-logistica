@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useParams } from "react-router"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
-import { getProduct, updateProduct, type Product, ProductStatus, type UpdateProductRequest } from "@/api/products"
+import { getProduct, updateProduct, type ProductDetails, ProductStatus, type UpdateProductRequest } from "@/api/products"
 import { type Warehouse } from "@/api/warehouses"
 import { type Supplier } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
 import { useWarehousesQuery } from "@/hooks/use-warehouses-query"
 import { useSuppliersQuery } from "@/hooks/use-suppliers-query"
+import { useCategoriesQuery } from "@/hooks/use-categories-query"
+import type { Category } from "@/api/categories"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,19 +21,41 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Checkbox } from "@/components/ui/checkbox"
+import { MultiSelect } from "@/components/multi-select"
 import { toast } from "sonner"
 
 const ProductFormSchema = z.object({
-  names: z.record(z.string(), z.string().min(1).max(255)),
-  descriptions: z.record(z.string(), z.string().min(1).max(255)),
-  warrantyDate: z.date(),
+  names: z
+    .record(z.string(), z.string().max(255, { message: "O nome deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos um nome em algum idioma" })
+      }
+    }),
+  descriptions: z
+    .record(z.string(), z.string().max(255, { message: "A descrição deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos uma descrição em algum idioma" })
+      }
+    }),
+  warrantyDate: z.date({ message: "Informe a data de garantia" }),
   status: z.enum(ProductStatus),
-  minimumSalePrice: z.number().min(0).optional(),
-  stock: z.number().min(0).optional(),
-  categoriesIds: z.array(z.number().int().positive()).optional(),
-  warehouseId: z.number().int().positive(),
-  supplierId: z.number().int().positive(),
+  minimumSalePrice: z.number({ message: "Preço mínimo deve ser numérico" })
+    .min(0, { message: "Preço mínimo não pode ser negativo" })
+    .optional(),
+  stock: z.number({ message: "Estoque deve ser numérico" })
+    .min(0, { message: "Estoque não pode ser negativo" })
+    .optional(),
+  categoriesIds: z.array(z.number().int({ message: "Categoria inválida" }).positive({ message: "Categoria inválida" })).optional(),
+  warehouseId: z.number({ message: "Selecione um armazém" })
+    .int({ message: "Armazém inválido" })
+    .positive({ message: "Armazém inválido" }),
+  supplierId: z.number({ message: "Selecione um fornecedor" })
+    .int({ message: "Fornecedor inválido" })
+    .positive({ message: "Fornecedor inválido" }),
 })
 
 type ProductFormValues = z.infer<typeof ProductFormSchema>
@@ -42,12 +66,14 @@ export const ProductEditPage: React.FC = () => {
   const { data: languages = [] } = useLanguagesQuery()
   const { data: warehouses = [] } = useWarehousesQuery()
   const { data: suppliers = [] } = useSuppliersQuery()
+  const { data: categories = [] } = useCategoriesQuery()
 
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
   const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
   const filteredSuppliers = useMemo(() => suppliers.filter(s => supplierType === 'PF' ? s.type === 'natural_person' : s.type === 'legal_entity'), [suppliers, supplierType])
+  const queryClient = useQueryClient()
 
-  const productQuery = useQuery<Product>({
+  const productQuery = useQuery<ProductDetails>({
     queryKey: ["product", productId],
     queryFn: () => getProduct(productId),
     enabled: !!productId,
@@ -84,9 +110,16 @@ export const ProductEditPage: React.FC = () => {
     const p = productQuery.data
     if (!p) return
 
-    // Initialize selected languages from product data
+    // Initialize selected languages from product data or default to pt/en
     const langsFromProduct = Object.keys(p.names ?? {})
-    setSelectedLangs(langsFromProduct.length ? langsFromProduct : (languages[0] ? [languages[0].isoCode] : []))
+    if (langsFromProduct.length) {
+      setSelectedLangs(langsFromProduct)
+    } else if (languages.length) {
+      const pt = languages.find((l) => l.isoCode?.toLowerCase().startsWith("pt"))?.isoCode
+      const en = languages.find((l) => l.isoCode?.toLowerCase().startsWith("en"))?.isoCode
+      const initial = [pt, en].filter(Boolean) as string[]
+      setSelectedLangs(initial.length ? initial : [languages[0].isoCode])
+    }
 
     // Infer supplier type from product supplier
     const current = suppliers.find(s => s.id === p.supplierId)
@@ -108,8 +141,10 @@ export const ProductEditPage: React.FC = () => {
 
   const mutation = useMutation({
     mutationFn: (values: UpdateProductRequest) => updateProduct(productId, values),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Produto atualizado com sucesso")
+      await queryClient.invalidateQueries({ queryKey: ["products"] })
+      await queryClient.invalidateQueries({ queryKey: ["product", productId] })
     },
     onError: (err: Error) => {
       toast.error(err.message)
@@ -165,32 +200,19 @@ export const ProductEditPage: React.FC = () => {
               {/* Language multi-select */}
               <div className="space-y-2">
                 <div className="text-sm font-medium">Idiomas do produto</div>
-                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                  {languages.map((lang) => {
-                    const checked = selectedLangs.includes(lang.isoCode)
-                    return (
-                      <label key={lang.isoCode} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(v) => {
-                            setSelectedLangs((prev) => {
-                              const isChecked = v === true
-                              if (isChecked) {
-                                return prev.includes(lang.isoCode) ? prev : [...prev, lang.isoCode]
-                              }
-                              if (prev.length <= 1) {
-                                toast.error("Selecione ao menos um idioma")
-                                return prev
-                              }
-                              return prev.filter((c) => c !== lang.isoCode)
-                            })
-                          }}
-                        />
-                        <span>{lang.name} ({lang.isoCode})</span>
-                      </label>
-                    )
-                  })}
-                </div>
+                <MultiSelect
+                  options={languages.map((l) => ({ label: `${l.name} (${l.isoCode})`, value: l.isoCode }))}
+                  value={selectedLangs}
+                  onChange={(vals) => {
+                    if (vals.length === 0) {
+                      toast.error("Selecione ao menos um idioma")
+                      return
+                    }
+                    setSelectedLangs(vals)
+                  }}
+                  placeholder="Selecione idiomas..."
+                  showClearAll={false}
+                />
                 <p className="text-xs text-muted-foreground">Marque os idiomas que deseja editar. Apenas estes campos serão exibidos.</p>
               </div>
 
@@ -234,6 +256,22 @@ export const ProductEditPage: React.FC = () => {
                     )}
                   />
                 ))}
+              </div>
+
+              {/* Categories */}
+              <div className="space-y-2">
+                <FormItem>
+                  <FormLabel>Categorias</FormLabel>
+                  <MultiSelect
+                    options={categories.map((c: Category) => ({ label: c.name, value: String(c.id) }))}
+                    value={(form.watch('categoriesIds') as unknown as number[] | undefined)?.map((id) => String(id)) ?? []}
+                    onChange={(vals) => {
+                      const ids = vals.map((v) => parseInt(v, 10)).filter((n) => Number.isFinite(n))
+                      form.setValue('categoriesIds', ids as unknown as number[])
+                    }}
+                    placeholder="Selecione categorias..."
+                  />
+                </FormItem>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -332,13 +370,17 @@ export const ProductEditPage: React.FC = () => {
                       <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                         <FormControl>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o armazém" />
+<SelectValue placeholder={warehouses.length ? "Selecione o armazém" : "Nenhum armazém cadastrado"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {warehouses.map((w: Warehouse) => (
-                            <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
-                          ))}
+{warehouses.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum armazém cadastrado</div>
+                          ) : (
+                            warehouses.map((w: Warehouse) => (
+                              <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -373,15 +415,19 @@ export const ProductEditPage: React.FC = () => {
                         <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione o fornecedor" />
+                              <SelectValue placeholder={filteredSuppliers.length ? "Selecione o fornecedor" : "Nenhum fornecedor cadastrado"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {filteredSuppliers.map((s: Supplier) => (
-                              <SelectItem key={s.id} value={String(s.id)}>
-                                {s.name} {s.type === 'natural_person' ? '(PF)' : '(PJ)'}
-                              </SelectItem>
-                            ))}
+                            {filteredSuppliers.length === 0 ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum fornecedor cadastrado</div>
+                            ) : (
+                              filteredSuppliers.map((s: Supplier) => (
+                                <SelectItem key={s.id} value={String(s.id)}>
+                                  {s.name} {s.type === 'natural_person' ? '(PF)' : '(PJ)'}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />

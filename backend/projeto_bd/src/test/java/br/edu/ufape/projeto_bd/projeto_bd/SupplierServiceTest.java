@@ -21,6 +21,7 @@ import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.LegalEntity;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.NaturalPerson;

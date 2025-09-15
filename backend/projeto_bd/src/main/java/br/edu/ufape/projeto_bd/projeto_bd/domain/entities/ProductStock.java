@@ -1,10 +1,6 @@
 package br.edu.ufape.projeto_bd.projeto_bd.domain.entities;
 
-
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
@@ -13,12 +9,16 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,31 +26,39 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "categories")
+@Table(
+    name = "product_stocks",
+    uniqueConstraints = { @UniqueConstraint(columnNames = {"products_id", "warehouses_id"})}
+    )
 @EntityListeners(AuditingEntityListener.class)
-@SQLDelete(sql= "UPDATE categories SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE product_stocks SET deleted_at=NOW() WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Category {
-
+public class ProductStock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @NotBlank(message = "O nome da categoria não pode estar em branco")
-    @Size(max = 100, message = "O nome da categoria não pode ultrapassar 100 caracteres")
-    @Column(name = "name", nullable = false, length = 100)
-    private String name;
+    @NotBlank(message = "O código do estoque não pode estar em branco")
+    @Size(max = 50, message = "O código do estoque não pode ultrapassar 50 caracteres")
+    @Column(name = "code", nullable = false, unique = true, length = 50)
+    private String code;
 
-    @Column(name = "description")
-    private String description;
+    @PositiveOrZero(message = "A quantidade do estoque não pode ser negativa")
+    @Column(name = "amount", nullable = false)
+    private Long amount;
 
-    @ManyToMany(mappedBy = "categories")
-    private Set<Product> products = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "products_id", nullable = false)
+    private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouses_id", nullable = false)
+    private Warehouse warehouse;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -62,5 +70,5 @@ public class Category {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-    
+
 }

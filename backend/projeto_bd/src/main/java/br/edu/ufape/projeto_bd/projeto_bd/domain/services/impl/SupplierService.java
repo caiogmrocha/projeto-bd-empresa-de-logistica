@@ -36,6 +36,7 @@ public class SupplierService implements ISupplierService {
     private final SupplierMapper supplierMapper;
 
     @Override
+    @Transactional
     public SupplierResponseDTO createSupplier(SupplierRequestDTO supplierRequest) {
         if (supplierRequest.getSupplierType() == SupplierType.NATURAL_PERSON) {
             if (supplierRequest.getCpf() != null &&
@@ -89,6 +90,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SupplierResponseDTO findSupplierById(Long id) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Supplier.class, id));
@@ -116,6 +118,7 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
+    @Transactional
     public void deleteSupplier(Long id) {
         if (!supplierRepository.existsById(id)) {
             throw new EntityNotFoundException(Supplier.class, id);

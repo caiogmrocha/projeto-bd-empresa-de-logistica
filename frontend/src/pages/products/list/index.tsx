@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Table,
   TableBody,
@@ -11,43 +11,106 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { getProducts, type ProductsPage, type Product } from "@/api/products"
+import { getProducts, deleteProduct, type Product, type GetProductsParams } from "@/api/products"
+import type { PageResponse } from "@/api/pagination"
 import { usePaginationSearchState } from "@/hooks/use-pagination-search-state"
 import { useDebounced } from "@/hooks/use-debounced"
 import { StatusPill } from "@/components/status-pill"
-
-function pickProductName(p: Product): string {
-  // Preferir pt-BR, depois en, senão o primeiro disponível
-  if (p.names["pt-BR"]) return p.names["pt-BR"]
-  if (p.names["en"]) return p.names["en"]
-  const first = Object.values(p.names)[0]
-  return first || "(sem nome)"
-}
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 export function ProductsListPage() {
-  const { page, limit, search, setState } = usePaginationSearchState()
+  const { limit, search, setState } = usePaginationSearchState()
+  const queryClient = useQueryClient()
   const [searchInput, setSearchInput] = React.useState(search)
   const debouncedSearch = useDebounced(searchInput, 400)
+
+  // Sorting state (local)
+  const [sortBy, setSortBy] = React.useState<NonNullable<GetProductsParams['sortBy']>>('id')
+  const [order, setOrder] = React.useState<NonNullable<GetProductsParams['order']>>('asc')
 
   React.useEffect(() => {
     // Mantém o input sincronizado quando a URL muda externamente
     setSearchInput(search)
   }, [search])
 
-  const query = useQuery<ProductsPage>({
-    queryKey: ["products", page, limit, debouncedSearch],
-    queryFn: () => getProducts({ page, limit, search: debouncedSearch }),
+  const query = useInfiniteQuery<PageResponse<Product>>({
+    queryKey: ["products", limit, debouncedSearch, sortBy, order],
+    initialPageParam: 1, // 1-based
+    queryFn: ({ pageParam }) => getProducts({ page: pageParam as number, limit, search: debouncedSearch, sortBy, order }),
+    getNextPageParam: (lastPage) => {
+      // Spring returns 0-based 'number' and 'last' flag
+      if (lastPage.last) return undefined
+      return lastPage.number + 2 // convert to 1-based next page
+    },
   })
 
-  const items = query.data?.items ?? []
-  const total = query.data?.total ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const rows = query.data?.pages.flatMap((p) => p.content) ?? []
+
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const [pendingId, setPendingId] = React.useState<number | null>(null)
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number | string) => deleteProduct(id),
+    onSuccess: (_res, idArg) => {
+      // Remove o item deletado de todos os caches de produtos (todas as variações de queryKey)
+      const queries = queryClient.getQueriesData<PageResponse<Product>>({ queryKey: ["products"] })
+      for (const [key, data] of queries) {
+        if (!data) continue
+        const newPages = data.pages.map((pg) => ({
+          ...pg,
+          content: pg.content.filter((item) => item.id !== Number(idArg)),
+          numberOfElements: pg.content.filter((item) => item.id !== Number(idArg)).length,
+          totalElements: Math.max(0, (pg.totalElements ?? 0) - 1),
+        }))
+        queryClient.setQueryData(key, { ...data, pages: newPages })
+      }
+      toast.success(`Produto ${idArg} excluído com sucesso`)
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    },
+  })
+
+  const handleAskDelete = React.useCallback((id: number) => {
+    setPendingId(id)
+    setConfirmOpen(true)
+  }, [])
+
+  const onConfirmDelete = React.useCallback(async () => {
+    if (pendingId == null) return
+    try {
+      await deleteMutation.mutateAsync(pendingId)
+    } finally {
+      setConfirmOpen(false)
+      setPendingId(null)
+    }
+  }, [deleteMutation, pendingId])
+
+  const firstPage = query.data?.pages[0]
+  const total = firstPage?.totalElements ?? 0
+
+  const toggleSort = (key: NonNullable<GetProductsParams['sortBy']>) => {
+    if (sortBy === key) {
+      setOrder(order === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(key)
+      setOrder('asc')
+    }
+  }
+
+  const displayName = React.useCallback((product: Product) => {
+    const n = product.names || {}
+    const order = ['pt-BR', 'pt', 'en', ...Object.keys(n)]
+    for (const key of order) if (n[key]) return n[key]
+    return '(sem nome)'
+  }, [])
 
   return (
     <div className="w-full">
       <div className="flex items-center gap-2 py-4">
         <Input
-          placeholder="Buscar produtos..."
+          placeholder="Buscar produtos (id, status, preço)..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
@@ -56,10 +119,8 @@ export function ProductsListPage() {
           className="max-w-sm"
         />
         <Button variant="secondary" onClick={() => setState({ page: 1, search: searchInput })}>Buscar</Button>
-        <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" onClick={() => setState({ page: Math.max(1, page - 1) })} disabled={page <= 1}>Anterior</Button>
-          <span className="text-sm text-muted-foreground">Página {page} / {totalPages}</span>
-          <Button variant="outline" onClick={() => setState({ page: Math.min(totalPages, page + 1) })} disabled={page >= totalPages}>Próxima</Button>
+        <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Carregados: {rows.length} / {total}</span>
         </div>
       </div>
 
@@ -67,36 +128,51 @@ export function ProductsListPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead className="w-[80px]">
+                <button className="inline-flex items-center gap-1" onClick={() => toggleSort('id')}>
+                  ID {sortBy === 'id' ? (order === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Preço mín.</TableHead>
-              <TableHead className="text-right">Estoque</TableHead>
+              <TableHead>
+                <button className="inline-flex items-center gap-1" onClick={() => toggleSort('status')}>
+                  Status {sortBy === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
+              <TableHead className="text-right">
+                <button className="inline-flex items-center gap-1" onClick={() => toggleSort('minimumSalePrice')}>
+                  Preço mín. {sortBy === 'minimumSalePrice' ? (order === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
+              <TableHead className="text-right">
+                <button className="inline-flex items-center gap-1" onClick={() => toggleSort('createdAt')}>
+                  Criado em {sortBy === 'createdAt' ? (order === 'asc' ? '▲' : '▼') : ''}
+                </button>
+              </TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.length ? (
-              items.map((p) => (
+            {rows.length ? (
+              rows.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.id}</TableCell>
-                  <TableCell>{pickProductName(p)}</TableCell>
+                  <TableCell className="truncate max-w-[240px]" title={displayName(p)}>{displayName(p)}</TableCell>
                   <TableCell><StatusPill status={p.status} /></TableCell>
-                  <TableCell className="text-right">{p.minimumSalePrice?.toLocaleString(undefined, { style: 'currency', currency: 'BRL' })}</TableCell>
-                  <TableCell className="text-right">{p.stock}</TableCell>
+                  <TableCell className="text-right">{typeof p.minimumSalePrice === 'number' ? p.minimumSalePrice.toLocaleString(undefined, { style: 'currency', currency: 'BRL' }) : String(p.minimumSalePrice)}</TableCell>
+                  <TableCell className="text-right">{new Date(p.createdAt).toLocaleString()}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button asChild size="sm" variant="outline">
                       <Link to={`/products/${p.id}/edit`}>Editar</Link>
                     </Button>
-                    <Button asChild size="sm" variant="destructive">
-                      <Link to={`/products/${p.id}/delete`}>Excluir</Link>
+                    <Button size="sm" variant="destructive" onClick={() => handleAskDelete(p.id)} disabled={deleteMutation.isPending}>
+                      Excluir
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
+              ))) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   {query.isLoading ? 'Carregando...' : 'Nenhum resultado.'}
                 </TableCell>
               </TableRow>
@@ -107,8 +183,35 @@ export function ProductsListPage() {
 
       <div className="flex items-center justify-between py-4 text-sm text-muted-foreground">
         <div>Total: {total}</div>
-        <div>Página {page} de {totalPages}</div>
+        <div>
+          <Button
+            variant="outline"
+            onClick={() => query.fetchNextPage()}
+            disabled={!query.hasNextPage || query.isFetchingNextPage}
+          >
+            {query.isFetchingNextPage ? 'Carregando...' : (query.hasNextPage ? 'Carregar mais' : 'Não há mais resultados')}
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogDescription>
+              Esta ação removerá o produto {pendingId ?? ''}. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={deleteMutation.isPending}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={onConfirmDelete} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

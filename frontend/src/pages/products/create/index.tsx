@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,6 +10,8 @@ import { type Supplier } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
 import { useWarehousesQuery } from "@/hooks/use-warehouses-query"
 import { useSuppliersQuery } from "@/hooks/use-suppliers-query"
+import { useCategoriesQuery } from "@/hooks/use-categories-query"
+import type { Category } from "@/api/categories"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,20 +20,42 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Checkbox } from "@/components/ui/checkbox"
+import { MultiSelect } from "@/components/multi-select"
 import { toast } from "sonner"
 
 // Dynamic schema using records so we can support any set of language ISO codes
 const ProductFormSchema = z.object({
-  names: z.record(z.string(), z.string().min(1).max(255)),
-  descriptions: z.record(z.string(), z.string().min(1).max(255)),
-  warrantyDate: z.date(),
+  names: z
+    .record(z.string(), z.string().max(255, { message: "O nome deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos um nome em algum idioma" })
+      }
+    }),
+  descriptions: z
+    .record(z.string(), z.string().max(255, { message: "A descrição deve ter no máximo 255 caracteres" }))
+    .superRefine((obj, ctx) => {
+      const hasAtLeastOne = Object.values(obj || {}).some((v) => (v ?? '').trim().length > 0)
+      if (!hasAtLeastOne) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Preencha ao menos uma descrição em algum idioma" })
+      }
+    }),
+  warrantyDate: z.date({ message: "Informe a data de garantia" }),
   status: z.enum(ProductStatus),
-  minimumSalePrice: z.number().min(0).optional(),
-  stock: z.number().min(0).optional(),
-  categoriesIds: z.array(z.number().int().positive()).optional(),
-  warehouseId: z.number().int().positive(),
-  supplierId: z.number().int().positive(),
+  minimumSalePrice: z.number({ message: "Preço mínimo deve ser numérico" })
+    .min(0, { message: "Preço mínimo não pode ser negativo" })
+    .optional(),
+  stock: z.number({ message: "Estoque deve ser numérico" })
+    .min(0, { message: "Estoque não pode ser negativo" })
+    .optional(),
+  categoriesIds: z.array(z.number().int({ message: "Categoria inválida" }).positive({ message: "Categoria inválida" })).optional(),
+  warehouseId: z.number({ message: "Selecione um armazém" })
+    .int({ message: "Armazém inválido" })
+    .positive({ message: "Armazém inválido" }),
+  supplierId: z.number({ message: "Selecione um fornecedor" })
+    .int({ message: "Fornecedor inválido" })
+    .positive({ message: "Fornecedor inválido" }),
 })
 
 type ProductFormValues = z.infer<typeof ProductFormSchema>
@@ -40,6 +64,7 @@ export const ProductCreatePage: React.FC = () => {
   const { data: languages = [], isLoading: loadingLangs } = useLanguagesQuery()
   const { data: warehouses = [] } = useWarehousesQuery()
   const { data: suppliers = [] } = useSuppliersQuery()
+  const { data: categories = [] } = useCategoriesQuery()
 
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
   const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
@@ -71,12 +96,25 @@ export const ProductCreatePage: React.FC = () => {
     mode: "onSubmit",
   })
 
+  useEffect(() => {
+    if (Object.keys(form.formState.errors).length > 0) {
+      console.log("Erros de validação:", form.formState.errors)
+    }
+  }, [form.formState.errors])
+
   // Reset form defaults when language list changes so fields appear populated
   useEffect(() => {
     form.reset(defaultValues)
-    // Initialize selection with first language for convenience
+    // Initialize selection with Portuguese and English when available
     if (languages.length && selectedLangs.length === 0) {
-      setSelectedLangs([languages[0].isoCode])
+      const pt = languages.find((l) => l.isoCode?.toLowerCase().startsWith("pt"))?.isoCode
+      const en = languages.find((l) => l.isoCode?.toLowerCase().startsWith("en"))?.isoCode
+      const initial = [pt, en].filter(Boolean) as string[]
+      if (initial.length > 0) {
+        setSelectedLangs(initial)
+      } else {
+        setSelectedLangs([languages[0].isoCode])
+      }
     }
   }, [form, languages, selectedLangs, defaultValues])
 
@@ -91,14 +129,17 @@ export const ProductCreatePage: React.FC = () => {
     }
   }, [form, supplierType, suppliers])
 
+  const queryClient = useQueryClient()
   const createProductMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: async () => {
-      alert(`Produto criado com sucesso.`)
+      toast.success(`Produto criado com sucesso.`)
+      // Refresh products list pages
+      await queryClient.invalidateQueries({ queryKey: ["products"] })
       form.reset(defaultValues)
     },
     onError: (err: Error) => {
-      alert(err.message)
+      toast.error(err.message)
     },
   })
 
@@ -148,33 +189,19 @@ export const ProductCreatePage: React.FC = () => {
               {/* Language multi-select */}
               <div className="space-y-2">
                 <div className="text-sm font-medium">Idiomas do produto</div>
-                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                  {languages.map((lang) => {
-                    const checked = selectedLangs.includes(lang.isoCode)
-                    return (
-                      <label key={lang.isoCode} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(v) => {
-                            setSelectedLangs((prev) => {
-                              const isChecked = v === true
-                              if (isChecked) {
-                                return prev.includes(lang.isoCode) ? prev : [...prev, lang.isoCode]
-                              }
-                              // Prevent removing the last selected language
-                              if (prev.length <= 1) {
-                                toast.error("Selecione ao menos um idioma")
-                                return prev
-                              }
-                              return prev.filter((c) => c !== lang.isoCode)
-                            })
-                          }}
-                        />
-                        <span>{lang.name} ({lang.isoCode})</span>
-                      </label>
-                    )
-                  })}
-                </div>
+                <MultiSelect
+                  options={languages.map((l) => ({ label: `${l.name} (${l.isoCode})`, value: l.isoCode }))}
+                  value={selectedLangs}
+                  onChange={(vals) => {
+                    if (vals.length === 0) {
+                      toast.error("Selecione ao menos um idioma")
+                      return
+                    }
+                    setSelectedLangs(vals)
+                  }}
+                  placeholder="Selecione idiomas..."
+                  showClearAll={false}
+                />
                 <p className="text-xs text-muted-foreground">Selecione um ou mais idiomas. Os campos abaixo serão exibidos somente para os idiomas selecionados.</p>
               </div>
 
@@ -220,8 +247,24 @@ export const ProductCreatePage: React.FC = () => {
                 ))}
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Warranty Date - Date Picker */}
+                {/* Categories */}
+                <div className="space-y-2">
+                  <FormItem>
+                    <FormLabel>Categorias</FormLabel>
+                    <MultiSelect
+                      options={categories.map((c: Category) => ({ label: c.name, value: String(c.id) }))}
+                      value={(form.watch('categoriesIds') as unknown as number[] | undefined)?.map((id) => String(id)) ?? []}
+                      onChange={(vals) => {
+                        const ids = vals.map((v) => parseInt(v, 10)).filter((n) => Number.isFinite(n))
+                        form.setValue('categoriesIds', ids as unknown as number[])
+                      }}
+                      placeholder="Selecione categorias..."
+                    />
+                  </FormItem>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {/* Warranty Date - Date Picker */}
                 <FormField
                   control={form.control}
                   name="warrantyDate"
@@ -316,13 +359,17 @@ export const ProductCreatePage: React.FC = () => {
                       <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                         <FormControl>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecione o armazém" />
+<SelectValue placeholder={warehouses.length ? "Selecione o armazém" : "Nenhum armazém cadastrado"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {warehouses.map((w: Warehouse) => (
-                            <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
-                          ))}
+{warehouses.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum armazém cadastrado</div>
+                          ) : (
+                            warehouses.map((w: Warehouse) => (
+                              <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -357,15 +404,19 @@ export const ProductCreatePage: React.FC = () => {
                         <Select onValueChange={(v) => field.onChange(parseInt(v, 10))} value={String(field.value ?? "")}>
                           <FormControl>
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecione o fornecedor" />
+<SelectValue placeholder={filteredSuppliers.length ? "Selecione o fornecedor" : "Nenhum fornecedor cadastrado"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {filteredSuppliers.map((s: Supplier) => (
+{filteredSuppliers.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum fornecedor cadastrado</div>
+                          ) : (
+                            filteredSuppliers.map((s: Supplier) => (
                               <SelectItem key={s.id} value={String(s.id)}>
                                 {s.name} {s.type === 'natural_person' ? '(PF)' : '(PJ)'}
                               </SelectItem>
-                            ))}
+                            ))
+                          )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
