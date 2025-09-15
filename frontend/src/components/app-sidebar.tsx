@@ -12,7 +12,9 @@ import {
   // PieChart,
   // Settings2,
   // SquareTerminal,
-  Building2
+  Building2,
+  User,
+  Warehouse
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -85,6 +87,22 @@ const data = {
       ],
     },
     {
+      title: "Armazéns",
+      url: "/warehouses",
+      icon: Warehouse,
+      isActive: true,
+      items: [
+        {
+          title: "Listagem",
+          url: "/warehouses",
+        },
+        {
+          title: "Criação",
+          url: "/warehouses/create",
+        },
+      ],
+    },
+    {
       title: "Fornecedores",
       url: "/suppliers",
       icon: Building2,
@@ -97,6 +115,22 @@ const data = {
         {
           title: "Criação",
           url: "/suppliers/create",
+        },
+      ],
+    },
+    {
+      title: "Clientes",
+      url: "/customers",
+      icon: User,
+      isActive: true,
+      items: [
+        {
+          title: "Listagem",
+          url: "/customers",
+        },
+        {
+          title: "Criação",
+          url: "/customers/create",
         },
       ],
     },

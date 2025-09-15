@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -34,18 +35,19 @@ import lombok.Setter;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name="customers")
+@EntityListeners(AuditingEntityListener.class)
 public class Customer {
 	  @Id
 	  @GeneratedValue(strategy = GenerationType.IDENTITY)
-	  @Column(name = "id")
+	  @Column(name = "id")	
 	  private Long id;
 	  
 	  @Column(name = "name", length = 100, nullable = false)
 	  private String name;
 	  
-	  @ManyToOne
+	  @ManyToOne(cascade = CascadeType.ALL)
 	  @JoinColumn(name="addresses_id", nullable=false)
-	  private Address address;
+	  private Address addresses;
 	  
 	  @Column(name="credit_limit", nullable=false)
 	  private BigDecimal creditLimit;
