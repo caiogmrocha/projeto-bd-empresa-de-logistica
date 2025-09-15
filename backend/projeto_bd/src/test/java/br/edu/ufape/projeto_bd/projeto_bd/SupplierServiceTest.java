@@ -3,11 +3,9 @@ package br.edu.ufape.projeto_bd.projeto_bd;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -16,12 +14,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.LegalEntity;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.NaturalPerson;
