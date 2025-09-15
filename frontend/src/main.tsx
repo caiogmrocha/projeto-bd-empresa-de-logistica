@@ -6,6 +6,8 @@ import { router } from './routes.tsx'
 
 import "./assets/css/index.css"
 import { ThemeProvider } from './components/theme-provider.tsx'
+import "@/lib/zod-ptbr"
+import { Toaster } from './components/ui/sonner.tsx'
 
 const queryClient = new QueryClient()
 
@@ -16,5 +18,6 @@ createRoot(document.getElementById('root')!).render(
           <RouterProvider router={router} />
       </ThemeProvider>
     </QueryClientProvider>
+    <Toaster />
   </StrictMode>,
 )

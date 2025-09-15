@@ -10,7 +10,7 @@ public interface IProductService {
 
     public ProductResponseDTO findProductById(Long id);
 
-    Page<ProductResponseDTO> findAllProducts(Pageable pageable);
+    Page<ProductResponseDTO> findAllProducts(Pageable pageable, String search);
 
     public ProductResponseDTO updateProduct(Long id, ProductRequestDTO request);
 
