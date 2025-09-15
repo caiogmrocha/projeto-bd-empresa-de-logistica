@@ -1,11 +1,11 @@
 // Create payload keyed dynamically by language ISO codes present in the system
 export interface CreateCustomerRequest {
   name: string
-  credit: number
-  address: Address
+  creditLimit: number
+  addresses: Addresses[]
 }
 
-export interface Address {
+export interface Addresses {
   country: string
   state: string
   city: string

@@ -15,7 +15,7 @@ import { toast } from "sonner"
 const CustomerFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
   country: z.string().min(1, "País é obrigatório").max(50, "País deve ter no máximo 50 caracteres"),
-  credit: z.number().min(0, "Crédito deve ser um número não negativo"),
+  creditLimit: z.number().min(0, "Crédito deve ser um número não negativo"),
   state: z.string().min(1, "Estado é obrigatório").max(50, "Estado deve ter no máximo 50 caracteres"),
   city: z.string().min(1, "Cidade é obrigatória").max(50, "Cidade deve ter no máximo 50 caracteres"),
   street: z.string().min(1, "Rua é obrigatória").max(100, "Rua deve ter no máximo 100 caracteres"),
@@ -38,7 +38,7 @@ export const EditCustomerPage: React.FC = () => {
     defaultValues: {
       name: "",
       country: "",
-      credit: 0,
+      creditLimit: 0,
       state: "",
       city: "",
       street: "",
@@ -54,13 +54,13 @@ export const EditCustomerPage: React.FC = () => {
     if (!c) return
     form.reset({
       name: c.name,
-      credit: c.credit,
-      country: c.address.country,
-      state: c.address.state,
-      city: c.address.city,
-      street: c.address.street,
-      number: c.address.number,
-      zipCode: c.address.zipCode,
+      creditLimit: c.creditLimit,
+      country: c.addresses[0].country,
+      state: c.addresses[0].state,
+      city: c.addresses[0].city,
+      street: c.addresses[0].street,
+      number: c.addresses[0].number,
+      zipCode: c.addresses[0].zipCode,
     })
   }, [form, customerQuery.data])
 
@@ -68,15 +68,15 @@ export const EditCustomerPage: React.FC = () => {
     mutationFn: (values: CustomerFormValues) =>
       updateCustomer(customerId, {
         name: values.name,
-        credit: values.credit || 0,
-        address: {
+        creditLimit: values.creditLimit || 0,
+        addresses: [{
           country: values.country,
           state: values.state,
           city: values.city,
           street: values.street,
           number: values.number,
           zipCode: values.zipCode,
-        },
+        }],
       }),
     onSuccess: () => {
       toast.success("Warehouse updated successfully")
@@ -137,7 +137,7 @@ export const EditCustomerPage: React.FC = () => {
                 />
                 <FormField
                   control={form.control}
-                  name="credit"
+                  name="creditLimit"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Crédito</FormLabel>

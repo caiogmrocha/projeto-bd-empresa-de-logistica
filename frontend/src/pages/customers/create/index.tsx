@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 
 const CustomerFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
-  credit: z.number().min(0, "Crédito deve ser um número não negativo"),
+  creditLimit: z.number().min(0, "Crédito deve ser um número não negativo"),
   country: z.string().min(1, "País é obrigatório").max(50, "País deve ter no máximo 50 caracteres"),
   state: z.string().min(1, "Estado é obrigatório").max(50, "Estado deve ter no máximo 50 caracteres"),
   city: z.string().min(1, "Cidade é obrigatória").max(50, "Cidade deve ter no máximo 50 caracteres"),
@@ -30,7 +30,7 @@ export const CustomerCreatePage: React.FC = () => {
     resolver: zodResolver(CustomerFormSchema),
     defaultValues: {
       name: "",
-      credit: 0,
+      creditLimit: 0,
       country: "",
       state: "",
       city: "",
@@ -60,15 +60,15 @@ export const CustomerCreatePage: React.FC = () => {
     // Normalize optional empty strings to undefined
     const payload = {
       ...values,
-      credit: values.credit || 0,
-      address: {
+      creditLimit: values.creditLimit || 0,
+      addresses: [{
         country: values.country || '',
         state: values.state || '',
         city: values.city || '',
         street: values.street || '',
         number: values.number || '',
         zipCode: values.zipCode || '',
-      },
+      }],
     }
     mutation.mutate(payload)
   }
@@ -99,7 +99,7 @@ export const CustomerCreatePage: React.FC = () => {
 
               <FormField
                 control={form.control}
-                name="credit"
+                name="creditLimit"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Crédito</FormLabel>

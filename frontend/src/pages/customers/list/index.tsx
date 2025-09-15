@@ -58,7 +58,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => <div>{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "credit",
+    accessorKey: "creditLimit",
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -68,19 +68,19 @@ const columns: ColumnDef<Customer>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const credit = parseFloat(row.getValue("credit"))
+      const creditLimit = parseFloat(row.getValue("creditLimit"))
       return (
         <div className="text-center font-medium">
           {new Intl.NumberFormat("pt-BR", {
             style: "currency",
             currency: "BRL",
-          }).format(credit)}
+          }).format(creditLimit)}
         </div>
       )
     },
   },
   {
-    accessorFn: (row) => row.address.country,
+    accessorFn: (row) => row.addresses[0].country,
     id: "country",
     header: ({ column }) => (
       <Button
@@ -93,7 +93,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => <div>{row.getValue("country")}</div>,
   },
   {
-    accessorFn: (row) => row.address.state,
+    accessorFn: (row) => row.addresses[0].state,
     id: "state",
     header: ({ column }) => (
       <Button
@@ -106,7 +106,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => <div>{row.getValue("state")}</div>,
   },
   {
-    accessorFn: (row) => row.address.city,
+    accessorFn: (row) => row.addresses[0].city,
     id: "city",
     header: ({ column }) => (
       <Button
