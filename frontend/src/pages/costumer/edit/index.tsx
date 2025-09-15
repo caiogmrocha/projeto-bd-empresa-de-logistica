@@ -54,19 +54,32 @@ export const EditCustomerPage: React.FC = () => {
     if (!c) return
     form.reset({
       name: c.name,
-      country: c.country,
-      state: c.state,
-      city: c.city,
-      street: c.street,
-      number: c.number,
-      zipCode: c.zipCode,
+      credit: c.credit,
+      country: c.address.country,
+      state: c.address.state,
+      city: c.address.city,
+      street: c.address.street,
+      number: c.address.number,
+      zipCode: c.address.zipCode,
     })
   }, [form, customerQuery.data])
 
   const mutation = useMutation({
-    mutationFn: (values: CustomerFormValues) => updateCustomer(customerId, values),
+    mutationFn: (values: CustomerFormValues) =>
+      updateCustomer(customerId, {
+        name: values.name,
+        credit: values.credit || 0,
+        address: {
+          country: values.country,
+          state: values.state,
+          city: values.city,
+          street: values.street,
+          number: values.number,
+          zipCode: values.zipCode,
+        },
+      }),
     onSuccess: () => {
-      toast.success("Customer updated successfully")
+      toast.success("Warehouse updated successfully")
     },
     onError: (err: Error) => {
       toast.error(err.message)
