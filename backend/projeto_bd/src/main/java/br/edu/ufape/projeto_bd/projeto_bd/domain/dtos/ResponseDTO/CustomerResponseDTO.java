@@ -16,7 +16,7 @@ import lombok.Setter;
 public class CustomerResponseDTO {
 	  private Long id;
 	  private String name;
-	  private AddressDTO adress;
+	  private AddressDTO addresses;
 	  private BigDecimal creditLimit;
 	  private LocalDateTime createdAt;
 	  private LocalDateTime updatedAt;
