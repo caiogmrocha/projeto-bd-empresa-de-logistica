@@ -120,7 +120,7 @@ public class SeedDataRunner implements CommandLineRunner {
             Customer c = new Customer();
             c.setName(faker.name().fullName());
             Address addr = addressRepository.save(fakeAddress()); // persist first (no cascade on @ManyToOne)
-            c.setAddress(addr);
+            c.setAddresses(addr);
             c.setCreditLimit(new BigDecimal(faker.number().numberBetween(500, 10_000)));
             list.add(c);
         }
@@ -270,21 +270,9 @@ public class SeedDataRunner implements CommandLineRunner {
             if (key == null) continue;
             long orderId = key.longValue();
 
-            int maxItems = Math.min(3, products.size());
-            int items = Math.max(1, random.nextInt(maxItems) + 1);
-            Set<Long> usedProductIds = new HashSet<>();
+            int items = 1 + random.nextInt(3);
             for (int it = 0; it < items; it++) {
-                // Pick a unique product for this order
-                Product p;
-                int attempts = 0;
-                do {
-                    p = products.get(random.nextInt(products.size()));
-                    attempts++;
-                    if (attempts > 10) break; // fallback safety
-                } while (usedProductIds.contains(p.getId()));
-                if (usedProductIds.contains(p.getId())) break;
-                usedProductIds.add(p.getId());
-
+                Product p = products.get(random.nextInt(products.size()));
                 long amount = 1 + random.nextInt(5);
                 BigDecimal min = p.getMinimumSalePrice();
                 BigDecimal salePrice = min.add(BigDecimal.valueOf(random.nextInt(1000) / 10.0));

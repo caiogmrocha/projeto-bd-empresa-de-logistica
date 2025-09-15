@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 //Talvez fosse interessante usar Long ao invés de Long nos ids
-//O nome addresses não 
+//O nome addresses não
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,25 +33,24 @@ import lombok.Setter;
 @SQLDelete(sql = "UPDATE customers SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Table(name="customers")
 @EntityListeners(AuditingEntityListener.class)
 public class Customer {
 	  @Id
 	  @GeneratedValue(strategy = GenerationType.IDENTITY)
-	  @Column(name = "id")	
+	  @Column(name = "id")
 	  private Long id;
-	  
+
 	  @Column(name = "name", length = 100, nullable = false)
 	  private String name;
-	  
+
 	  @ManyToOne(cascade = CascadeType.ALL)
 	  @JoinColumn(name="addresses_id", nullable=false)
 	  private Address addresses;
-	  
+
 	  @Column(name="credit_limit", nullable=false)
 	  private BigDecimal creditLimit;
-	  
+
 	  @CreatedDate
 	  @Column(name = "created_at", nullable = false, updatable = false)
 	  private LocalDateTime createdAt;
