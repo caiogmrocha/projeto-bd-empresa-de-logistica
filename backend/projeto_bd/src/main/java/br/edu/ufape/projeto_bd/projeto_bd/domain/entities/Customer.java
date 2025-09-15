@@ -33,6 +33,7 @@ import lombok.Setter;
 @SQLDelete(sql = "UPDATE customers SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name="customers")
 @EntityListeners(AuditingEntityListener.class)
 public class Customer {
