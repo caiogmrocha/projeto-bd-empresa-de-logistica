@@ -3,6 +3,7 @@ import { CompaniesListPage } from "./list";
 import { CompanyCreatePage } from "./create";
 import { CompanyDetailsPage } from "./details";
 import { EditCompanyPage } from "./edit";
+import { DeleteCompanyModal } from "./delete";
 
 export const companiesRoutes: RouteObject[] = [
   {
@@ -13,16 +14,20 @@ export const companiesRoutes: RouteObject[] = [
         Component: CompaniesListPage,
       },
       {
-        path: "/companies/create",
+        path: "create",
         Component: CompanyCreatePage,
       },
       {
-        path: "/companies/:companyId",
+        path: ":companyId",
         Component: CompanyDetailsPage,
       },
       {
-        path: "/companies/:companyId/edit",
+        path: ":companyId/edit",
         Component: EditCompanyPage,
+      },
+      {
+        path: ":companyId/delete",
+        Component: DeleteCompanyModal,
       },
     ],
   },

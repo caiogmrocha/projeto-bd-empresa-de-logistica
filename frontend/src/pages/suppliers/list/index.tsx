@@ -5,45 +5,46 @@ import { useQuery } from "@tanstack/react-query"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getCompanies, type CompaniesPage, type Company } from "@/api/companies"
+import { getSuppliers, type SuppliersPage, type Supplier } from "@/api/suppliers"
 import { usePaginationSearchState } from "@/hooks/use-pagination-search-state"
 import { useDebounced } from "@/hooks/use-debounced"
 
-export function CompaniesListPage() {
-  const { page, limit, search, setState } = usePaginationSearchState({paramKeys: {search: 'tradeName'}});
-  const [searchInput, setSearchInput] = React.useState(search);
-  const [direction, setDirection] = React.useState<"asc" | "desc">("asc");
-  const debouncedSearch = useDebounced(searchInput, 400);
+export function SuppliersListPage() {
+  const { page, limit, search, setState } = usePaginationSearchState()
+  const [searchInput, setSearchInput] = React.useState(search)
+  const [direction, setDirection] = React.useState<"asc" | "desc">("asc")
+  const debouncedSearch = useDebounced(searchInput, 400)
 
   React.useEffect(() => {
-    setSearchInput(search);
-  }, [search]);
+    setSearchInput(search)
+  }, [search])
 
-  const query = useQuery<CompaniesPage>({
-    queryKey: ["companies", page, limit, debouncedSearch, direction],
+  const query = useQuery<SuppliersPage>({
+    queryKey: ["suppliers", page, limit, debouncedSearch, direction],
     queryFn: () =>
-      getCompanies({
+      getSuppliers({
         page: page - 1,
         size: limit,
-        tradeName: debouncedSearch,
-        sortBy: "tradeName",
+        name: debouncedSearch,
+        sortBy: "name",
         direction,
       }),
-  });
+  })
 
-  const items = query.data?.content ?? [];
-  const total = query.data?.totalElements ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const items = query.data?.content ?? []
+  const total = query.data?.totalElements ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / limit))
 
   return (
     <div className="w-full">
+      {/* 🔍 Filtro de busca */}
       <div className="flex items-center gap-2 py-4">
         <Input
-          placeholder="Buscar empresas..."
+          placeholder="Buscar fornecedores..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") setState({ page: 1, search: e.currentTarget.value });
+            if (e.key === "Enter") setState({ page: 1, search: e.currentTarget.value })
           }}
           className="max-w-sm"
         />
@@ -54,10 +55,11 @@ export function CompaniesListPage() {
           Buscar
         </Button>
         <Button asChild variant="outline" className="ml-auto">
-          <Link to="/companies/create">Nova empresa</Link>
+          <Link to="/suppliers/create">Novo fornecedor</Link>
         </Button>
       </div>
 
+      {/* Tabela */}
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
@@ -68,39 +70,41 @@ export function CompaniesListPage() {
                   variant="ghost"
                   onClick={() => setDirection(direction === "asc" ? "desc" : "asc")}
                 >
-                  Nome Fantasia
+                  Nome
                   <ArrowUpDown className="ml-2 h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>Razão Social</TableHead>
-              <TableHead>CNPJ</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.length ? (
-              items.map((company: Company) => (
-                <TableRow key={company.id}>
-                  <TableCell>{company.id}</TableCell>
-                  <TableCell>{company.tradeName}</TableCell>
-                  <TableCell>{company.legalName}</TableCell>
-                  <TableCell>{company.cnpj}</TableCell>
+              items.map((supplier: Supplier) => (
+                <TableRow key={supplier.id}>
+                  <TableCell>{supplier.id}</TableCell>
+                  <TableCell>{supplier.name}</TableCell>
+                  <TableCell>
+                    {supplier.supplierType === "NATURAL_PERSON"
+                      ? "Pessoa Física"
+                      : "Pessoa Jurídica"}
+                  </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button asChild size="sm" variant="secondary">
-                      <Link to={`/companies/${company.id}`}>Detalhes</Link>
+                      <Link to={`/suppliers/${supplier.id}`}>Detalhes</Link>
                     </Button>
                     <Button asChild size="sm" variant="outline">
-                      <Link to={`/companies/${company.id}/edit`}>Editar</Link>
+                      <Link to={`/suppliers/${supplier.id}/edit`}>Editar</Link>
                     </Button>
                     <Button asChild size="sm" variant="destructive">
-                      <Link to={`/companies/${company.id}/delete`}>Excluir</Link>
+                      <Link to={`/suppliers/${supplier.id}/delete`}>Excluir</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   {query.isLoading ? "Carregando..." : "Nenhum resultado."}
                 </TableCell>
               </TableRow>
@@ -109,6 +113,7 @@ export function CompaniesListPage() {
         </Table>
       </div>
 
+      {/* Paginação */}
       <div className="flex items-center justify-between py-4 text-sm text-muted-foreground">
         <div>Total: {total}</div>
         <div className="flex items-center gap-2">

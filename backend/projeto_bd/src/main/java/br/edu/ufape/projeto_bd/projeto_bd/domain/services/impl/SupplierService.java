@@ -1,11 +1,15 @@
 package br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.LegalEntity;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.NaturalPerson;
@@ -69,12 +73,20 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
-    @Transactional (readOnly = true)
-    public List<SupplierResponseDTO> findAllSuppliers() {
-        List<Supplier> suppliers = supplierRepository.findAll();
-        return suppliers.stream()
-                .map(supplierMapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<SupplierResponseDTO> findAllSuppliers(int page, int size, String sortBy, String direction,
+            String name) {
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+
+        Page<Supplier> result;
+
+        if (name != null && !name.isEmpty()) {
+            result = supplierRepository.findByNameContainingIgnoreCase(name, pageable);
+        } else {
+            result = supplierRepository.findAll(pageable);
+        }
+
+        return result.map(supplier -> supplierMapper.toDTO(supplier));
     }
 
     @Override
@@ -87,35 +99,18 @@ public class SupplierService implements ISupplierService {
     }
 
     @Override
-    @Transactional
-    public SupplierResponseDTO updateSupplier(Long id, SupplierRequestDTO supplierRequest) {
+    public SupplierResponseDTO updateSupplier(Long id, SupplierPatchDTO supplierPatch) {
         Supplier supplierToUpdate = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(Supplier.class, id));
 
-        if (supplierToUpdate instanceof NaturalPerson && supplierRequest.getCpf() != null) {
-            NaturalPerson naturalPerson = (NaturalPerson) supplierToUpdate;
-            if (!naturalPerson.getCpf().equals(supplierRequest.getCpf()) &&
-                    naturalPersonRepository.existsByCpfAndIdNot(supplierRequest.getCpf(), id)) {
-                throw new AttributeAlreadyInUseException("CPF", supplierRequest.getCpf(), NaturalPerson.class);
-            }
-        } else if (supplierToUpdate instanceof LegalEntity && supplierRequest.getCnpj() != null) {
-            LegalEntity legalEntity = (LegalEntity) supplierToUpdate;
-            if (!legalEntity.getCnpj().equals(supplierRequest.getCnpj()) &&
-                    legalEntityRepository.existsByCnpjAndIdNot(supplierRequest.getCnpj(), id)) {
-                throw new AttributeAlreadyInUseException("CNPJ", supplierRequest.getCnpj(), LegalEntity.class);
-            }
+        if (supplierPatch.getName() != null) {
+            supplierToUpdate.setName(supplierPatch.getName());
         }
 
-        supplierToUpdate.setName(supplierRequest.getName());
-
-        Address updatedAddress = addressMapper.toEntity(supplierRequest.getAddress());
-        updatedAddress.setId(supplierToUpdate.getAddress().getId());
-        supplierToUpdate.setAddress(updatedAddress);
-
-        if (supplierToUpdate instanceof NaturalPerson && supplierRequest.getCpf() != null) {
-            ((NaturalPerson) supplierToUpdate).setCpf(supplierRequest.getCpf());
-        } else if (supplierToUpdate instanceof LegalEntity && supplierRequest.getCnpj() != null) {
-            ((LegalEntity) supplierToUpdate).setCnpj(supplierRequest.getCnpj());
+        if (supplierPatch.getAddress() != null) {
+            Address updatedAddress = addressMapper.toEntity(supplierPatch.getAddress());
+            updatedAddress.setId(supplierToUpdate.getAddress().getId());
+            supplierToUpdate.setAddress(updatedAddress);
         }
 
         Supplier savedSupplier = supplierRepository.save(supplierToUpdate);

@@ -6,8 +6,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -23,8 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.edu.ufape.projeto_bd.projeto_bd.controllers.SupplierController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.SupplierService;
 
@@ -57,14 +59,14 @@ public class SupplierControllerTest {
         supplierRequest = new SupplierRequestDTO();
         supplierRequest.setSupplierType(SupplierType.NATURAL_PERSON);
         supplierRequest.setName("John Doe");
-        supplierRequest.setCpf("12345678901");
+        supplierRequest.setCpf("00025426095");
         supplierRequest.setAddress(addressDTO);
 
         supplierResponse = new SupplierResponseDTO();
         supplierResponse.setId(1L);
         supplierResponse.setName("John Doe");
         supplierResponse.setSupplierType(SupplierType.NATURAL_PERSON);
-        supplierResponse.setCpf("12345678901");
+        supplierResponse.setCpf("00025426095");
         supplierResponse.setAddress(addressDTO);
     }
 
@@ -82,15 +84,17 @@ public class SupplierControllerTest {
     }
 
     @Test
-    void listSuppliers_ShouldReturnList() throws Exception {
-        List<SupplierResponseDTO> suppliers = Arrays.asList(supplierResponse);
-        when(supplierService.findAllSuppliers()).thenReturn(suppliers);
+    void listSuppliers_ShouldReturnPage() throws Exception {
+        Page<SupplierResponseDTO> suppliersPage = new PageImpl<>(Collections.singletonList(supplierResponse));
 
-        mockMvc.perform(get("/api/suppliers"))
+        when(supplierService.findAllSuppliers(0, 10, "id", "asc", null))
+                .thenReturn(suppliersPage);
+
+        mockMvc.perform(get("/api/suppliers?page=0&size=10&sortBy=id&direction=asc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].name").value("John Doe"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].name").value("John Doe"));
     }
 
     @Test
@@ -110,15 +114,16 @@ public class SupplierControllerTest {
         updatedResponse.setId(1L);
         updatedResponse.setName("John Doe Updated");
         updatedResponse.setSupplierType(SupplierType.NATURAL_PERSON);
-        
-        when(supplierService.updateSupplier(any(Long.class), any(SupplierRequestDTO.class)))
+
+        SupplierPatchDTO patchDTO = new SupplierPatchDTO();
+        patchDTO.setName("John Doe Updated");
+
+        when(supplierService.updateSupplier(any(Long.class), any(SupplierPatchDTO.class)))
                 .thenReturn(updatedResponse);
 
-        supplierRequest.setName("John Doe Updated");
-
-        mockMvc.perform(put("/api/suppliers/1")
+        mockMvc.perform(patch("/api/suppliers/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(supplierRequest)))
+                .content(objectMapper.writeValueAsString(patchDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.name").value("John Doe Updated"));

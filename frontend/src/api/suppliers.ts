@@ -1,26 +1,112 @@
-// Based on V8__create_suppliers_table.sql (id, name, type)
-export type SupplierType = 'natural_person' | 'legal_entity'
+export enum SupplierType {
+  NATURAL_PERSON = "NATURAL_PERSON",
+  LEGAL_ENTITY = "LEGAL_ENTITY",
+}
 
-export interface Supplier {
-  id: number
+export interface Address {
+  street: string
+  number: string
+  city: string
+  state: string
+  zipCode: string
+  country: string
+}
+
+export interface CreateSupplierRequest {
   name: string
-  type: SupplierType
+  supplierType: SupplierType
+  cpf?: string
+  cnpj?: string
+  address: Address
 }
 
-const API_BASE_URL = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL) || process.env.VITE_API_URL || process.env.API_URL || ''
+export interface UpdateSupplierRequest {
+  name: string
+  address: Address
+}
 
-// Fetch suppliers from backend and map enum to UI type
-export async function getSuppliers(): Promise<Supplier[]> {
-  const base = API_BASE_URL?.replace(/\/$/, '') || ''
-  const res = await fetch(`${base}/api/suppliers`)
-  if (!res.ok) {
-    throw new Error(`Failed to fetch suppliers: ${res.status} ${res.statusText}`)
+export interface SuppliersPage {
+  content: Supplier[]
+  page: number
+  size: number
+  totalElements: number
+}
+
+export type Supplier = {
+  id: number
+} & CreateSupplierRequest
+
+async function handleFetchErrors(response: Response, defaultErrorMessage: string) {
+  if (!response.ok) {
+    try {
+      const errorData = await response.json()
+      throw new Error(errorData.message || defaultErrorMessage)
+    } catch {
+      throw new Error(defaultErrorMessage)
+    }
   }
-  const data = await res.json() as Array<{ id: number; name: string; supplierType: 'NATURAL_PERSON' | 'LEGAL_ENTITY' }>
-  return data.map((s) => ({
-    id: s.id,
-    name: s.name,
-    type: s.supplierType === 'NATURAL_PERSON' ? 'natural_person' : 'legal_entity',
-  }))
 }
 
+export async function createSupplier(data: CreateSupplierRequest): Promise<Supplier> {
+  const response = await fetch("/api/suppliers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+
+  await handleFetchErrors(response, "Falha ao criar fornecedor")
+  return response.json() as Promise<Supplier>
+}
+
+export async function getSuppliers(params: {
+  page?: number
+  size?: number
+  name?: string
+  sortBy?: string
+  direction?: "asc" | "desc"
+} = {}): Promise<SuppliersPage> {
+  const query = new URLSearchParams({
+    page: String(params.page ?? 0),
+    size: String(params.size ?? 10),
+    sortBy: params.sortBy ?? "id",
+    direction: params.direction ?? "asc",
+  })
+
+  if (params.name) {
+    query.set("name", params.name)
+  }
+
+  const response = await fetch(`/api/suppliers?${query.toString()}`)
+  await handleFetchErrors(response, "Falha ao buscar fornecedores")
+  return response.json() as Promise<SuppliersPage>
+}
+
+export async function getSupplier(id: number | string): Promise<Supplier> {
+  const response = await fetch(`/api/suppliers/${id}`)
+  await handleFetchErrors(response, "Falha ao buscar o fornecedor")
+  return response.json() as Promise<Supplier>
+}
+
+export async function updateSupplier(id: number | string, data: UpdateSupplierRequest): Promise<Supplier> {
+  const response = await fetch(`/api/suppliers/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+
+  await handleFetchErrors(response, "Falha ao atualizar fornecedor")
+  return response.json() as Promise<Supplier>
+}
+
+export async function deleteSupplier(id: number | string): Promise<{ ok: true; id: number | string }> {
+  const response = await fetch(`/api/suppliers/${id}`, {
+    method: "DELETE",
+  })
+
+  await handleFetchErrors(response, "Falha ao excluir fornecedor")
+
+  if (response.status === 204) {
+    return { ok: true, id }
+  }
+  return { ok: true, id }
+}

@@ -1,6 +1,6 @@
 package br.edu.ufape.projeto_bd.projeto_bd.controllers;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +8,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.PageResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.SupplierService;
 import jakarta.validation.Valid;
@@ -18,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Validated
 public class SupplierController {
-    
+
     private final SupplierService supplierService;
 
     @PostMapping
@@ -28,9 +30,15 @@ public class SupplierController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SupplierResponseDTO>> listSuppliers() {
-        List<SupplierResponseDTO> suppliers = supplierService.findAllSuppliers();
-        return ResponseEntity.ok(suppliers);
+    public ResponseEntity<PageResponseDTO<SupplierResponseDTO>> listSuppliers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) String name) {
+
+        Page<SupplierResponseDTO> suppliers = supplierService.findAllSuppliers(page, size, sortBy, direction, name);
+        return ResponseEntity.ok(new PageResponseDTO<>(suppliers));
     }
 
     @GetMapping("/{id}")
@@ -39,8 +47,9 @@ public class SupplierController {
         return ResponseEntity.ok(supplier);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<SupplierResponseDTO> updateSupplier(@PathVariable Long id, @Valid @RequestBody SupplierRequestDTO body) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<SupplierResponseDTO> updateSupplier(@PathVariable Long id,
+            @Valid @RequestBody SupplierPatchDTO body) {
         SupplierResponseDTO updatedSupplier = supplierService.updateSupplier(id, body);
         return ResponseEntity.ok(updatedSupplier);
     }
