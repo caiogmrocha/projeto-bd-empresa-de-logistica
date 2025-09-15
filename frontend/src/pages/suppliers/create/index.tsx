@@ -85,9 +85,12 @@ export const SupplierCreatePage: React.FC = () => {
     const payload: CreateSupplierRequest = {
       name: values.name,
       supplierType: values.supplierType,
-      address: values.address,
-      cpf: values.supplierType === SupplierType.NATURAL_PERSON ? values.cpf || undefined : undefined,
-      cnpj: values.supplierType === SupplierType.LEGAL_ENTITY ? values.cnpj || undefined : undefined,
+      address: {
+        ...values.address,
+        zipCode: values.address.zipCode.replace(/\D/g, ""),
+      },
+      cpf: values.supplierType === SupplierType.NATURAL_PERSON ? values.cpf?.replace(/\D/g, "") || undefined : undefined,
+      cnpj: values.supplierType === SupplierType.LEGAL_ENTITY ? values.cnpj?.replace(/\D/g, "") || undefined : undefined,
     };
     await createSupplierMutation.mutateAsync(payload);
   }, [createSupplierMutation]);
@@ -258,7 +261,6 @@ export const SupplierCreatePage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Botões alinhados */}
               <div className="flex justify-between mt-4">
                 <Button
                   variant="outline"

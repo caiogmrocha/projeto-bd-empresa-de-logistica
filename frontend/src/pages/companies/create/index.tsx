@@ -26,7 +26,7 @@ const AddressFormSchema = z.object({
 const CompanyFormSchema = z.object({
   tradeName: z.string().min(1, "Nome fantasia é obrigatório.").max(100),
   legalName: z.string().min(1, "Razão social é obrigatória.").max(100),
-  cnpj: z.string().min(14, "CNPJ deve ter 14 caracteres.").max(14, "CNPJ deve ter 14 caracteres."),
+  cnpj: z.string().min(14, "CNPJ deve ter 14 caracteres.").max(18, "CNPJ deve ter no máximo 18 caracteres."),
   phones: z.array(z.object({
     value: z.string().min(1, "Telefone não pode ser vazio."),
   })),
@@ -89,6 +89,11 @@ export const CompanyCreatePage = () => {
       ...values,
       phones: values.phones.map(phone => phone.value),
       emails: values.emails.map(email => email.value),
+      cnpj: values.cnpj.replace(/\D/g, ""),
+      address: {
+        ...values.address,
+        zipCode: values.address.zipCode.replace(/\D/g, ""),
+      },
     };
     await createCompanyMutation.mutateAsync(payload);
   }, [createCompanyMutation]);
