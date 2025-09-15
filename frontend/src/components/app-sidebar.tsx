@@ -71,6 +71,22 @@ const data = {
       ],
     },
     {
+      title: "Produtos",
+      url: "/products",
+      icon: Building2,
+      isActive: true,
+      items: [
+        {
+          title: "Listagem",
+          url: "/products",
+        },
+        {
+          title: "Criação",
+          url: "/products/create",
+        },
+      ],
+    },
+    {
       title: "Armazéns",
       url: "/warehouses",
       icon: Warehouse,
@@ -83,6 +99,22 @@ const data = {
         {
           title: "Criação",
           url: "/warehouses/create",
+        },
+      ],
+    },
+    {
+      title: "Fornecedores",
+      url: "/suppliers",
+      icon: Building2,
+      isActive: false,
+      items: [
+        {
+          title: "Listagem",
+          url: "/suppliers",
+        },
+        {
+          title: "Criação",
+          url: "/suppliers/create",
         },
       ],
     },

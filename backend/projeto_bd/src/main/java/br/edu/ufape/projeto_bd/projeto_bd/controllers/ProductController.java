@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.ProductRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.ProductResponseDTO;
@@ -27,7 +28,7 @@ public class ProductController {
 
     private final IProductService productService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductRequestDTO request) {
 
         ProductResponseDTO newProduct = productService.createProduct(request);
@@ -48,12 +49,14 @@ public class ProductController {
      * Os parâmetros de paginação (page, size, sort) são passados na URL.
      * Ex: /products?page=0&size=10&sort=minimumSalePrice,desc
      * @param pageable Objeto que o Spring monta a partir dos parâmetros da URL.
+     * @param search Palavra-chave opcional para filtrar (por id, status ou preço mínimo).
      * @return ResponseEntity com a página de produtos e o status HTTP 200 (OK).
      */
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDTO>> getAllProducts(Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseDTO>> getAllProducts(Pageable pageable,
+            @RequestParam(name = "search", required = false) String search) {
 
-        Page<ProductResponseDTO> products = productService.findAllProducts(pageable);
+        Page<ProductResponseDTO> products = productService.findAllProducts(pageable, search);
         return ResponseEntity.ok(products);
 
     }

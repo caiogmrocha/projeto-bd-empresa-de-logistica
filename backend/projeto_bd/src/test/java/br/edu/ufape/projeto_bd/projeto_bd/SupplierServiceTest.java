@@ -1,6 +1,7 @@
 package br.edu.ufape.projeto_bd.projeto_bd;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import java.util.Arrays;
 import java.util.List;
@@ -10,24 +11,32 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.LegalEntity;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.NaturalPerson;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Supplier;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.exceptions.EntityNotFoundException;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.mappers.AddressMapper;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.mappers.SupplierMapper;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.SupplierRepository;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.NaturalPersonRepository;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.SupplierService;
-import jakarta.persistence.EntityNotFoundException;
 
 class SupplierServiceTest {
 
     @Mock
     private SupplierRepository supplierRepository;
+
+    @Mock
+    private NaturalPersonRepository naturalPersonRepository;
 
     @Mock
     private AddressMapper addressMapper;
@@ -48,41 +57,43 @@ class SupplierServiceTest {
         SupplierRequestDTO request = new SupplierRequestDTO();
         request.setSupplierType(SupplierType.NATURAL_PERSON);
         request.setName("John Doe");
-        request.setCpf("12345678901");
+        request.setCpf("00025426095");
         request.setAddress(new AddressDTO());
 
         Address mockAddress = new Address();
         NaturalPerson mockSupplier = new NaturalPerson();
         mockSupplier.setName("John Doe");
-        mockSupplier.setCpf("12345678901");
+        mockSupplier.setCpf("00025426095");
+
         SupplierResponseDTO expectedResponse = new SupplierResponseDTO();
         expectedResponse.setName("John Doe");
-        expectedResponse.setCpf("12345678901");
+        expectedResponse.setCpf("00025426095");
 
         when(addressMapper.toEntity(any())).thenReturn(mockAddress);
         when(supplierRepository.save(any(NaturalPerson.class))).thenReturn(mockSupplier);
         when(supplierMapper.toDTO(any(Supplier.class))).thenReturn(expectedResponse);
+        when(naturalPersonRepository.existsByCpf(anyString())).thenReturn(false);
 
         SupplierResponseDTO result = supplierService.createSupplier(request);
 
         assertNotNull(result);
         assertEquals("John Doe", result.getName());
-        assertEquals("12345678901", result.getCpf());
+        assertEquals("00025426095", result.getCpf());
         verify(supplierRepository).save(any(NaturalPerson.class));
     }
 
     @Test
-    void findAllSuppliers() {
+    void findAllSuppliers_WithPagination() {
         List<Supplier> mockSuppliers = Arrays.asList(new NaturalPerson(), new LegalEntity());
-        SupplierResponseDTO mockResponse = new SupplierResponseDTO();
-        
-        when(supplierRepository.findAll()).thenReturn(mockSuppliers);
-        when(supplierMapper.toDTO(any(Supplier.class))).thenReturn(mockResponse);
+        Page<Supplier> mockPage = new PageImpl<>(mockSuppliers);
 
-        List<SupplierResponseDTO> result = supplierService.findAllSuppliers();
+        when(supplierRepository.findAll(any(Pageable.class))).thenReturn(mockPage);
+        when(supplierMapper.toDTO(any(Supplier.class))).thenReturn(new SupplierResponseDTO());
+
+        Page<SupplierResponseDTO> result = supplierService.findAllSuppliers(0, 10, "id", "asc", null);
 
         assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test
@@ -90,7 +101,7 @@ class SupplierServiceTest {
         Long id = 1L;
         Supplier mockSupplier = new NaturalPerson();
         SupplierResponseDTO mockResponse = new SupplierResponseDTO();
-        
+
         when(supplierRepository.findById(id)).thenReturn(Optional.of(mockSupplier));
         when(supplierMapper.toDTO(mockSupplier)).thenReturn(mockResponse);
 
@@ -108,11 +119,11 @@ class SupplierServiceTest {
     }
 
     @Test
-    void updateSupplier() {
+    void updateSupplier_WithPatchDTO() {
         Long id = 1L;
-        SupplierRequestDTO request = new SupplierRequestDTO();
-        request.setName("Updated Name");
-        request.setAddress(new AddressDTO());
+        SupplierPatchDTO patch = new SupplierPatchDTO();
+        patch.setName("Updated Name");
+        patch.setAddress(new AddressDTO());
 
         NaturalPerson existingSupplier = new NaturalPerson();
         existingSupplier.setAddress(new Address());
@@ -125,9 +136,10 @@ class SupplierServiceTest {
         when(supplierRepository.save(any(Supplier.class))).thenReturn(existingSupplier);
         when(supplierMapper.toDTO(any(Supplier.class))).thenReturn(expectedResponse);
 
-        SupplierResponseDTO result = supplierService.updateSupplier(id, request);
+        SupplierResponseDTO result = supplierService.updateSupplier(id, patch);
 
         assertNotNull(result);
+        assertEquals("Updated Name", result.getName());
         verify(supplierRepository).save(any());
     }
 

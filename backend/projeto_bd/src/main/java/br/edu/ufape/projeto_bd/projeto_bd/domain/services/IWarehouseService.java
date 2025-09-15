@@ -10,7 +10,7 @@ public interface IWarehouseService {
 
     public WarehouseResponseDTO findWarehouseById(Long id);
 
-    public Page<WarehouseResponseDTO> findAllWarehouses(Pageable pageable);
+    public Page<WarehouseResponseDTO> findAllWarehouses(String name, Pageable pageable);
 
     public WarehouseResponseDTO updateWarehouse(Long id, WarehouseRequestDTO request);
 

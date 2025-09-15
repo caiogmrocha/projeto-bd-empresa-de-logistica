@@ -2,27 +2,35 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.entities;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.ProductStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Entity
 @Table(name = "products")
 @EntityListeners(AuditingEntityListener.class)
@@ -45,9 +53,19 @@ public class Product {
     @Column(name = "status", nullable = false)
     private ProductStatus status;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+      name = "products_categories",
+      joinColumns = @JoinColumn(name = "products_id"),
+      inverseJoinColumns = @JoinColumn(name = "categories_id"))
+    private Set<Category> categories = new HashSet<>();
+
     @PositiveOrZero(message = "O preço minimo de venda não pode ser negativo")
     @Column(name = "minimum_sale_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal minimumSalePrice;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductTranslation> translations;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
