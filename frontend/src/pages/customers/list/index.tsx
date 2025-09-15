@@ -80,7 +80,7 @@ const columns: ColumnDef<Customer>[] = [
     },
   },
   {
-    accessorFn: (row) => row.addresses[0].country,
+    accessorFn: (row) => row.addresses[0]?.country,
     id: "country",
     header: ({ column }) => (
       <Button
@@ -93,7 +93,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => <div>{row.getValue("country")}</div>,
   },
   {
-    accessorFn: (row) => row.addresses[0].state,
+    accessorFn: (row) => row.addresses[0]?.state,
     id: "state",
     header: ({ column }) => (
       <Button
@@ -106,7 +106,7 @@ const columns: ColumnDef<Customer>[] = [
     cell: ({ row }) => <div>{row.getValue("state")}</div>,
   },
   {
-    accessorFn: (row) => row.addresses[0].city,
+    accessorFn: (row) => row.addresses[0]?.city,
     id: "city",
     header: ({ column }) => (
       <Button
