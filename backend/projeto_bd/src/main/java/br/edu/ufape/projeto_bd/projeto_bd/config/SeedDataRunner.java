@@ -39,6 +39,7 @@ public class SeedDataRunner implements CommandLineRunner {
     private final LegalEntityRepository legalEntityRepository;
     private final CompanyRepository companyRepository;
     private final CustomerRepository customerRepository;
+    private final AddressRepository addressRepository;
     private final ProductRepository productRepository;
     private final ProductTranslationRepository productTranslationRepository;
     private final ProductStockRepository productStockRepository;
@@ -118,7 +119,8 @@ public class SeedDataRunner implements CommandLineRunner {
         for (int i = 0; i < howMany; i++) {
             Customer c = new Customer();
             c.setName(faker.name().fullName());
-            c.setAddress(fakeAddress());
+            Address addr = addressRepository.save(fakeAddress()); // persist first (no cascade on @ManyToOne)
+            c.setAddress(addr);
             c.setCreditLimit(new BigDecimal(faker.number().numberBetween(500, 10_000)));
             list.add(c);
         }
@@ -268,9 +270,21 @@ public class SeedDataRunner implements CommandLineRunner {
             if (key == null) continue;
             long orderId = key.longValue();
 
-            int items = 1 + random.nextInt(3);
+            int maxItems = Math.min(3, products.size());
+            int items = Math.max(1, random.nextInt(maxItems) + 1);
+            Set<Long> usedProductIds = new HashSet<>();
             for (int it = 0; it < items; it++) {
-                Product p = products.get(random.nextInt(products.size()));
+                // Pick a unique product for this order
+                Product p;
+                int attempts = 0;
+                do {
+                    p = products.get(random.nextInt(products.size()));
+                    attempts++;
+                    if (attempts > 10) break; // fallback safety
+                } while (usedProductIds.contains(p.getId()));
+                if (usedProductIds.contains(p.getId())) break;
+                usedProductIds.add(p.getId());
+
                 long amount = 1 + random.nextInt(5);
                 BigDecimal min = p.getMinimumSalePrice();
                 BigDecimal salePrice = min.add(BigDecimal.valueOf(random.nextInt(1000) / 10.0));
