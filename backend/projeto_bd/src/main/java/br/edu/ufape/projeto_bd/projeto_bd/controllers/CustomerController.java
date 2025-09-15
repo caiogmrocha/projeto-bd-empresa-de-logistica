@@ -32,8 +32,8 @@ public class CustomerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(Pageable pageable) {
-        Page<CustomerResponseDTO> customers = customerService.findAllCustomers(pageable);
+    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(@RequestParam(required = false) String name, Pageable pageable) {
+        Page<CustomerResponseDTO> customers = customerService.findAllCustomers(name, pageable);
         return ResponseEntity.ok(customers);
     }
 
