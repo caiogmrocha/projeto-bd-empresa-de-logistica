@@ -42,8 +42,14 @@ public class WarehouseService implements IWarehouseService {
 
     @Override
     @Transactional (readOnly = true)
-    public Page<WarehouseResponseDTO> findAllWarehouses(Pageable pageable) {
-        Page<Warehouse> warehousePage = warehouseRepository.findAll(pageable);
+    public Page<WarehouseResponseDTO> findAllWarehouses(String name, Pageable pageable) {
+        Page<Warehouse> warehousePage;
+
+        if (name == null || name.isBlank()) {
+            warehousePage = warehouseRepository.findAll(pageable);
+        } else {
+            warehousePage = warehouseRepository.findByNameContainingIgnoreCase(name, pageable);
+        }
 
         return warehousePage.map(warehouseMapper::toResponseDTO);
     }

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.WarehouseRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.ResponseDTO.WarehouseResponseDTO;
@@ -47,8 +48,8 @@ public class WarehouseController {
      * @return ResponseEntity com a página de armazéns e o status HTTP 200 (OK).
      */
     @GetMapping
-    public ResponseEntity<Page<WarehouseResponseDTO>> getAllWarehouses(Pageable pageable) {
-        Page<WarehouseResponseDTO> warehouses = warehouseService.findAllWarehouses(pageable);
+    public ResponseEntity<Page<WarehouseResponseDTO>> getAllWarehouses(@RequestParam(required = false) String name, Pageable pageable) {
+        Page<WarehouseResponseDTO> warehouses = warehouseService.findAllWarehouses(name, pageable);
         return ResponseEntity.ok(warehouses);
     }
 

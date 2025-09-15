@@ -2,6 +2,9 @@ package br.edu.ufape.projeto_bd.projeto_bd.domain.entities;
 
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
@@ -13,6 +16,7 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -42,9 +46,11 @@ public class Category {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-
     @Column(name = "description")
     private String description;
+
+    @ManyToMany(mappedBy = "categories")
+    private Set<Product> products = new HashSet<>();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
