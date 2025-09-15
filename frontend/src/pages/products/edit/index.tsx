@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 
 import { getProduct, updateProduct, type ProductDetails, ProductStatus, type UpdateProductRequest } from "@/api/products"
 import { type Warehouse } from "@/api/warehouses"
-import { type Supplier } from "@/api/suppliers"
+import { type Supplier, SupplierType } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
 import { useWarehousesQuery } from "@/hooks/use-warehouses-query"
 import { useSuppliersQuery } from "@/hooks/use-suppliers-query"
@@ -69,8 +69,11 @@ export const ProductEditPage: React.FC = () => {
   const { data: categories = [] } = useCategoriesQuery()
 
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
-  const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
-  const filteredSuppliers = useMemo(() => suppliers.filter(s => supplierType === 'PF' ? s.type === 'natural_person' : s.type === 'legal_entity'), [suppliers, supplierType])
+const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
+  const filteredSuppliers = useMemo(
+    () => suppliers.filter((s: Supplier) => supplierType === 'PF' ? s.supplierType === SupplierType.NATURAL_PERSON : s.supplierType === SupplierType.LEGAL_ENTITY),
+    [suppliers, supplierType]
+  )
   const queryClient = useQueryClient()
 
   const productQuery = useQuery<ProductDetails>({
@@ -122,8 +125,8 @@ export const ProductEditPage: React.FC = () => {
     }
 
     // Infer supplier type from product supplier
-    const current = suppliers.find(s => s.id === p.supplierId)
-    if (current) setSupplierType(current.type === 'natural_person' ? 'PF' : 'PJ')
+const current = suppliers.find((s: Supplier) => s.id === p.supplierId)
+    if (current) setSupplierType(current.supplierType === SupplierType.NATURAL_PERSON ? 'PF' : 'PJ')
 
     // Apply values
     form.reset({
@@ -422,9 +425,9 @@ export const ProductEditPage: React.FC = () => {
                             {filteredSuppliers.length === 0 ? (
                               <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum fornecedor cadastrado</div>
                             ) : (
-                              filteredSuppliers.map((s: Supplier) => (
+filteredSuppliers.map((s: Supplier) => (
                                 <SelectItem key={s.id} value={String(s.id)}>
-                                  {s.name} {s.type === 'natural_person' ? '(PF)' : '(PJ)'}
+                                  {s.name} {s.supplierType === SupplierType.NATURAL_PERSON ? '(PF)' : '(PJ)'}
                                 </SelectItem>
                               ))
                             )}

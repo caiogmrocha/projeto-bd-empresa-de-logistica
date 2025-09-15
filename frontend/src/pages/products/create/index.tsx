@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 
 import { createProduct, ProductStatus, type CreateProductRequest } from "@/api/products"
 import { type Warehouse } from "@/api/warehouses"
-import { type Supplier } from "@/api/suppliers"
+import { type Supplier, SupplierType } from "@/api/suppliers"
 import { useLanguagesQuery } from "@/hooks/use-languages-query"
 import { useWarehousesQuery } from "@/hooks/use-warehouses-query"
 import { useSuppliersQuery } from "@/hooks/use-suppliers-query"
@@ -67,8 +67,11 @@ export const ProductCreatePage: React.FC = () => {
   const { data: categories = [] } = useCategoriesQuery()
 
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
-  const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
-  const filteredSuppliers = useMemo(() => suppliers.filter(s => supplierType === 'PF' ? s.type === 'natural_person' : s.type === 'legal_entity'), [suppliers, supplierType])
+const [supplierType, setSupplierType] = useState<'PF' | 'PJ'>('PJ')
+  const filteredSuppliers = useMemo(
+    () => suppliers.filter((s: Supplier) => supplierType === 'PF' ? s.supplierType === SupplierType.NATURAL_PERSON : s.supplierType === SupplierType.LEGAL_ENTITY),
+    [suppliers, supplierType]
+  )
 
   const defaultValues = useMemo<Partial<ProductFormValues>>(() => {
     const names: Record<string, string> = {}
@@ -122,8 +125,12 @@ export const ProductCreatePage: React.FC = () => {
   useEffect(() => {
     const currentId = form.getValues('supplierId') as unknown as number | undefined
     if (currentId) {
-      const current = suppliers.find(s => s.id === currentId)
-      if (current && ((supplierType === 'PF' && current.type !== 'natural_person') || (supplierType === 'PJ' && current.type !== 'legal_entity'))) {
+const current = suppliers.find((s: Supplier) => s.id === currentId)
+      if (
+        current &&
+        ((supplierType === 'PF' && current.supplierType !== SupplierType.NATURAL_PERSON) ||
+          (supplierType === 'PJ' && current.supplierType !== SupplierType.LEGAL_ENTITY))
+      ) {
         form.setValue('supplierId', undefined as unknown as number)
       }
     }
@@ -411,9 +418,9 @@ export const ProductCreatePage: React.FC = () => {
 {filteredSuppliers.length === 0 ? (
                             <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum fornecedor cadastrado</div>
                           ) : (
-                            filteredSuppliers.map((s: Supplier) => (
+filteredSuppliers.map((s: Supplier) => (
                               <SelectItem key={s.id} value={String(s.id)}>
-                                {s.name} {s.type === 'natural_person' ? '(PF)' : '(PJ)'}
+                                {s.name} {s.supplierType === SupplierType.NATURAL_PERSON ? '(PF)' : '(PJ)'}
                               </SelectItem>
                             ))
                           )}
