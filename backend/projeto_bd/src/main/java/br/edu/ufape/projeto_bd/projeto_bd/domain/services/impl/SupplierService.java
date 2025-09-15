@@ -4,10 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
 import org.springframework.stereotype.Service;
-
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.entities.Address;
@@ -24,6 +22,7 @@ import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.NaturalPersonRepos
 import br.edu.ufape.projeto_bd.projeto_bd.domain.repositories.SupplierRepository;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.ISupplierService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

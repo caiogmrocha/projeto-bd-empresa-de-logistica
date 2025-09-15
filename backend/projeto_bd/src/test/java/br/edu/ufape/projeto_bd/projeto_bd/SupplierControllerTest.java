@@ -5,9 +5,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import java.util.Collections;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,13 +17,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import br.edu.ufape.projeto_bd.projeto_bd.controllers.SupplierController;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.AddressDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierPatchDTO;
-import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierRequestDTO;
+import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.RequestDTO.SupplierRequestDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.dtos.SupplierResponseDTO;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.enums.SupplierType;
 import br.edu.ufape.projeto_bd.projeto_bd.domain.services.impl.SupplierService;
