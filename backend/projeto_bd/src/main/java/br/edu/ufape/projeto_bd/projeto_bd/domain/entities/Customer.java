@@ -34,6 +34,7 @@ import lombok.Setter;
 @SQLRestriction(value = "deleted_at IS NULL")
 @Entity
 @Table(name="customers")
+@EntityListeners(AuditingEntityListener.class)
 public class Customer {
 	  @Id
 	  @GeneratedValue(strategy = GenerationType.IDENTITY)
