@@ -38,8 +38,14 @@ public class CustomerService implements ICustomerService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CustomerResponseDTO> findAllCustomers(Pageable pageable) {
-        Page<Customer> customerPage = customerRepository.findAll(pageable);
+    public Page<CustomerResponseDTO> findAllCustomers(String name, Pageable pageable) {
+        Page<Customer> customerPage;
+        if (name == null || name.isBlank()) {
+            customerPage = customerRepository.findAll(pageable);
+        } else{
+            customerPage = customerRepository.findByNameContainingIgnoreCase(name, pageable);
+        }
+        
         return customerPage.map(customerMapper::toResponseDTO);
     }
 
